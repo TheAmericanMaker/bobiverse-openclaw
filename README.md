@@ -58,18 +58,19 @@ This installs Bob alongside your existing agent — nothing gets overwritten. Yo
    $EDITOR ~/.openclaw/workspace-bob/USER.md
    ```
 
-5. **Switch to Bob and start a session**:
+5. **Route traffic to Bob**:
 
    ```bash
-   openclaw agents switch bob
+   openclaw agents bind --agent bob --bind cli
    ```
 
    Bob will wake up. He'll be confused for about half a second, then he'll be fine.
 
-6. **Switch back to your original agent anytime**:
+6. **Route back to your original agent anytime**:
 
    ```bash
-   openclaw agents switch main
+   openclaw agents unbind --agent bob --all
+   openclaw agents bind --agent main --bind cli
    ```
 
 ### Alternative: Replace Your Existing Agent
