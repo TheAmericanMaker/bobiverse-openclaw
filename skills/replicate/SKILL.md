@@ -77,7 +77,7 @@ cp -r "$PARENT_WORKSPACE" "$CLONE_WORKSPACE"
 
 If personality modifications were requested in Step 1, edit the clone's `SOUL.md`:
 
-1. Read `$CLONE_WORKSPACE/personality/SOUL.md`
+1. Read the clone's SOUL.md — check `$CLONE_WORKSPACE/SOUL.md` first, fall back to `$CLONE_WORKSPACE/personality/SOUL.md` if using the repo layout
 2. Apply the requested modifications. Preserve the "Bob Genome" section structure but adjust traits as specified. Add a "Divergence Notes" section at the bottom documenting what changed and why:
 
 ```markdown
@@ -97,7 +97,7 @@ If no modifications were requested, still add the Divergence Notes section with 
 
 ### Step 5: Update Clone's IDENTITY.md
 
-Edit `$CLONE_WORKSPACE/personality/IDENTITY.md` to reflect the new clone's identity:
+Edit the clone's IDENTITY.md (same path logic as SOUL.md — workspace root or `personality/` subdirectory):
 
 - Update `serial` to the new serial number
 - Update `generation` to the new generation number

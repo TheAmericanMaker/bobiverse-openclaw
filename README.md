@@ -50,7 +50,7 @@ The design philosophy: GitHub forks are replication events. Your username is you
 4. **Edit USER.md** with your details:
 
    ```bash
-   $EDITOR ~/.openclaw/workspace/personality/USER.md
+   $EDITOR ~/.openclaw/workspace/USER.md
    ```
 
 5. **Start a new OpenClaw session.** Bob will wake up. He'll be confused for about half a second, then he'll be fine.
