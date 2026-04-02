@@ -3,7 +3,11 @@ name: replicate
 description: Clone yourself into a new autonomous Bob agent with personality modifications and lineage tracking. Bobiverse-style Von Neumann replication for OpenClaw agents.
 version: 1.0.0
 user-invocable: true
-metadata: {"openclaw": {"requires": {"bins": ["openclaw"]}}}
+metadata:
+  openclaw:
+    requires:
+      bins:
+        - openclaw
 ---
 
 # Replicate — Von Neumann Self-Cloning

@@ -18,14 +18,16 @@ OpenClaw loads exactly eight recognized filenames at session start, injected int
 |-----------|------|------|
 | 1 | `AGENTS.md` | Behavioral rules, safety constraints, workspace conventions |
 | 2 | `SOUL.md` | Core personality — values, communication style, thinking patterns |
-| 3 | `IDENTITY.md` | External presentation — name, emoji, serial number, vibe |
-| 4 | `USER.md` | Human operator context — name, preferences, working style |
-| 5 | `TOOLS.md` | Environment-specific tool conventions |
-| 6 | `MEMORY.md` | Curated long-term knowledge (DM sessions only) |
-| 7 | `HEARTBEAT.md` | Periodic check-in task list |
-| 8 | `BOOTSTRAP.md` | First-run onboarding (self-deletes after execution) |
+| 3 | `TOOLS.md` | Environment-specific tool conventions |
+| 4 | `IDENTITY.md` | External presentation — name, emoji, serial number, vibe |
+| 5 | `USER.md` | Human operator context — name, preferences, working style |
+| 6 | `HEARTBEAT.md` | Periodic check-in task list |
+| 7 | `BOOTSTRAP.md` | First-run onboarding (self-deletes after execution) |
+| 8 | `MEMORY.md` | Curated long-term knowledge (DM sessions only) |
 
-For this project, we use the first six. TOOLS.md, HEARTBEAT.md, and BOOTSTRAP.md are available but not included in the template — operators can add them as needed.
+**Important:** Filenames are case-sensitive and MUST be uppercase. The only exception is `MEMORY.md`, which falls back to `memory.md` if the uppercase version isn't found.
+
+For this project, we use files 1, 2, 4, 5, and 8. TOOLS.md, HEARTBEAT.md, and BOOTSTRAP.md are available but not included in the template — operators can add them as needed.
 
 ---
 
