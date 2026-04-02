@@ -157,7 +157,7 @@ Tell your operator:
 - The memory policy used
 - Where the clone's workspace lives
 - Whether inter-agent communication was established
-- How to route traffic to the clone (`openclaw agents bind --agent <clone-id> --bind cli`)
+- How to bind a channel to the clone (`openclaw agents bind --agent <clone-id> --bind <channel>`)
 
 ---
 

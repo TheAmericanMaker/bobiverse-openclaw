@@ -58,19 +58,20 @@ This installs Bob alongside your existing agent — nothing gets overwritten. Yo
    $EDITOR ~/.openclaw/workspace-bob/USER.md
    ```
 
-5. **Route traffic to Bob**:
+5. **Bind a channel to Bob**:
 
    ```bash
-   openclaw agents bind --agent bob --bind cli
+   openclaw agents bind --agent bob --bind telegram
    ```
 
-   Bob will wake up. He'll be confused for about half a second, then he'll be fine.
+   Now Telegram messages route to Bob. He'll wake up, be confused for about half a second, then he'll be fine.
 
-6. **Route back to your original agent anytime**:
+   Your default agent (main) still handles everything without an explicit binding — webchat, TUI, etc.
+
+6. **Check your routing**:
 
    ```bash
-   openclaw agents unbind --agent bob --all
-   openclaw agents bind --agent main --bind cli
+   openclaw agents bindings
    ```
 
 ### Alternative: Replace Your Existing Agent
