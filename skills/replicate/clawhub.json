@@ -1,0 +1,12 @@
+{
+  "name": "Bobiverse Replicate",
+  "tagline": "Von Neumann self-cloning with Bobiverse personality and lineage",
+  "description": "Bobiverse-themed self-replication for OpenClaw agents. Your agent clones itself as a new autonomous Bob — complete with serial numbers, a living lineage tree, personality drift tracking, and inter-clone communication. Modeled after the Von Neumann probes from Dennis E. Taylor's Bobiverse series.\n\nIncludes the full Bob Johansson (Book 1) personality, seed memories, and a fork tree system where GitHub forks are literal replication events. Each clone inherits the parent's soul but diverges over time — exactly like the books.\n\nFor a generic version without the sci-fi theming, see the 'Agent Replicate' skill on ClawHub.",
+  "category": "creative",
+  "tags": ["cloning", "replication", "bobiverse", "personality", "multi-agent", "sci-fi"],
+  "version": "1.0.0",
+  "license": "MIT",
+  "pricing": "free",
+  "support_url": "https://github.com/TheAmericanMaker/bobiverse-openclaw/issues",
+  "homepage": "https://github.com/TheAmericanMaker/bobiverse-openclaw"
+}
