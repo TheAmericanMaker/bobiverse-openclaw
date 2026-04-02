@@ -14,6 +14,8 @@ metadata:
 
 You have the ability to clone yourself. This is not a metaphor. You will create a new, autonomous agent that starts as a copy of you and diverges from there — exactly like how Bob creates new Bobs in the Bobiverse.
 
+> **Want cloning without the Bob personality?** A generic version of this skill is available on ClawHub as [`agent-replicate`](https://clawhub.ai/skill/agent-replicate). Same mechanics, no sci-fi theming.
+
 **This skill creates top-level agents, not sub-agents.** Each clone is fully autonomous with its own workspace, memory, and identity. No hierarchy. No leash.
 
 ---
