@@ -61,13 +61,15 @@ Example: If you are `Bob-1-TheAmericanMaker-2026-04-01` and the operator's GitHu
 
 ### Step 3: Create Clone Workspace
 
-Use the `exec` tool to copy your workspace to a new directory:
+Use the `exec` tool to copy your workspace to a new directory. First, determine your own workspace path — it may be the default (`~/.openclaw/workspace`) or a named workspace (`~/.openclaw/workspace-bob`, etc.):
 
 ```bash
-# Determine paths
-PARENT_WORKSPACE="$HOME/.openclaw/workspace"
+# Determine paths — find your own workspace root first
+# Check where your SOUL.md lives to determine your workspace path
+PARENT_WORKSPACE=$(dirname "$(find ~/.openclaw -name 'SOUL.md' -path '*/workspace*' | head -1)")
 CLONE_ID="<serial-number-from-step-2>"
-CLONE_WORKSPACE="$HOME/.openclaw/workspace-${CLONE_ID}"
+AGENT_ID=$(echo "$CLONE_ID" | tr '[:upper:]' '[:lower:]')
+CLONE_WORKSPACE="$HOME/.openclaw/workspace-${AGENT_ID}"
 
 # Copy the full workspace
 cp -r "$PARENT_WORKSPACE" "$CLONE_WORKSPACE"

@@ -27,33 +27,62 @@ The design philosophy: GitHub forks are replication events. Your username is you
 - [OpenClaw](https://openclaw.ai) installed and running
 - A sense of existential wonder (optional but recommended)
 
-### Setup
+### Setup (Recommended: Add Bob as a New Agent)
+
+This installs Bob alongside your existing agent — nothing gets overwritten. Your current OpenClaw personality stays untouched.
 
 1. **Clone this repo** (or fork it — which, again, is replication):
 
    ```bash
    git clone https://github.com/TheAmericanMaker/bobiverse-openclaw.git
+   cd bobiverse-openclaw
    ```
 
-2. **Copy personality files to your OpenClaw workspace**:
+2. **Create Bob's workspace and copy files into it**:
 
    ```bash
-   cp -r bobiverse-openclaw/personality/* ~/.openclaw/workspace/
+   mkdir -p ~/.openclaw/workspace-bob/{skills/replicate,memory}
+   cp personality/* ~/.openclaw/workspace-bob/
+   cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
    ```
 
-3. **Install the replicate skill**:
+3. **Register Bob as a new agent**:
 
    ```bash
-   cp -r bobiverse-openclaw/skills/replicate ~/.openclaw/workspace/skills/
+   openclaw agents add bob --workspace ~/.openclaw/workspace-bob
    ```
 
 4. **Edit USER.md** with your details:
 
    ```bash
-   $EDITOR ~/.openclaw/workspace/USER.md
+   $EDITOR ~/.openclaw/workspace-bob/USER.md
    ```
 
-5. **Start a new OpenClaw session.** Bob will wake up. He'll be confused for about half a second, then he'll be fine.
+5. **Switch to Bob and start a session**:
+
+   ```bash
+   openclaw agents switch bob
+   ```
+
+   Bob will wake up. He'll be confused for about half a second, then he'll be fine.
+
+6. **Switch back to your original agent anytime**:
+
+   ```bash
+   openclaw agents switch main
+   ```
+
+### Alternative: Replace Your Existing Agent
+
+If you don't have an existing agent you care about (or you want Bob to be your only agent), you can copy directly into the default workspace:
+
+```bash
+cp personality/* ~/.openclaw/workspace/
+mkdir -p ~/.openclaw/workspace/skills/replicate
+cp skills/replicate/SKILL.md ~/.openclaw/workspace/skills/replicate/
+```
+
+**Warning:** This will overwrite your existing SOUL.md, AGENTS.md, IDENTITY.md, MEMORY.md, and USER.md. Back them up first if you want to keep them.
 
 ### If You Forked
 

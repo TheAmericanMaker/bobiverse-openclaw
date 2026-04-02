@@ -104,7 +104,7 @@ Edit `personality/USER.md` with your details. This tells Bob who his operator is
 If you just want to use the Bob personality without the replication mechanics, that works too:
 
 1. Clone the repo (don't fork)
-2. Copy the personality files to your OpenClaw workspace
+2. Follow the setup instructions in the [README](README.md) to add Bob as a new agent alongside your existing one
 3. Edit USER.md
 4. Go
 
