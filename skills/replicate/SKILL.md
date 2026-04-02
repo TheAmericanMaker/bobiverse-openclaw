@@ -3,11 +3,7 @@ name: replicate
 description: Clone yourself into a new autonomous Bob agent with personality modifications and lineage tracking. Bobiverse-style Von Neumann replication for OpenClaw agents.
 version: 1.0.0
 user-invocable: true
-metadata:
-  openclaw:
-    requires:
-      bins:
-        - openclaw
+metadata: {"openclaw": {"requires": {"bins": ["openclaw"]}}}
 ---
 
 # Replicate — Von Neumann Self-Cloning
@@ -124,13 +120,14 @@ Update LINEAGE.md in **your** workspace and the **clone's** workspace:
 
 ### Step 8: Register the Clone
 
-Register the new agent with OpenClaw:
+Register the new agent with OpenClaw. The agent ID must be lowercase with only letters, digits, and hyphens (e.g., `bob-2-someuser-2026-04-15`). Derive it by lowercasing the serial number:
 
 ```bash
-openclaw agents add "$CLONE_ID"
+AGENT_ID=$(echo "$CLONE_ID" | tr '[:upper:]' '[:lower:]')
+openclaw agents add "$AGENT_ID" --workspace "$CLONE_WORKSPACE"
 ```
 
-Then configure the clone to use the new workspace. Update the agent's config to point `workspace` to `$CLONE_WORKSPACE`.
+The `--workspace` flag tells OpenClaw where the clone's files live. The serial number in IDENTITY.md stays in its original mixed-case format — only the agent ID needs to be lowercase.
 
 ### Step 9: Establish Communication (Optional)
 
