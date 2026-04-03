@@ -80,3 +80,22 @@ Adopt a **two-layer model**:
 - **Is c28d8ef good?** Yes, as an immediate mitigation.
 - **Is c28d8ef the best solution?** No.
 - **Should we take a different approach?** Yes: implement a hardened runner + advisory skill split to turn policy text into enforceable controls.
+
+
+## Alignment with OpenClaw/ClawHub best practices
+
+### What is aligned
+
+- **Metadata format and gating hints:** `SKILL.md` uses single-line JSON metadata with `metadata.openclaw.requires.bins`, which matches OpenClaw skills guidance for metadata and required binaries.
+- **Exec safety intent:** The skill now explicitly warns against interpolating raw operator input and adds allowlist validation guidance, which aligns with OpenClaw's "Safety first" recommendation for exec-using skills.
+- **Capability disclosure:** `clawhub.json` now declares approval requirement and security/permission intent, which is directionally aligned with ClawHub's metadata-driven capability disclosure model.
+
+### Where it still diverges from strongest practice
+
+- **Procedural controls vs enforced controls:** Best practice is to enforce dangerous-operation safety in code paths (strict parser, path guards, shell-free subprocess), not solely in prose.
+- **High-risk action execution still instruction-local:** The skill directly describes cloning and agent registration operations; this keeps the package in a high-risk capability class and may continue to trigger scanner heuristics.
+- **Optional cross-agent comms remains broad risk surface:** Even with narrowed guidance, enabling inter-agent messaging is still a meaningful expansion of attack surface and should default to off unless separately approved.
+
+### Practical conclusion
+
+c28d8ef is **partially aligned** with OpenClaw/ClawHub best practices, but it is **not fully aligned with hardened-skill practice** until the risky steps are mediated by an audited, shell-safe runner and strict runtime enforcement.
