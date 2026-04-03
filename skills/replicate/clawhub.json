@@ -1,10 +1,10 @@
 {
   "name": "Bobiverse Replicate",
   "tagline": "Von Neumann self-cloning with Bobiverse personality and lineage",
-  "description": "Bobiverse-themed agent workspace duplication for OpenClaw. With operator approval, your agent creates a new Bob agent workspace with serial numbers, a living lineage tree, personality drift tracking, and inter-clone communication. Modeled after the Von Neumann probes from Dennis E. Taylor's Bobiverse series.\n\nIncludes the Bob Johansson (Book 1) workspace templates, lineage docs, and the replicate skill in one bundle so ClawHub installs can bootstrap a Bob workspace without a separate repo clone.\n\nFor a generic version without the sci-fi theming, see the Agent Replicate skill on ClawHub.",
+  "description": "Bobiverse-themed purposeful replication for OpenClaw. Replication runs only on explicit operator command with concrete mission need, a confirmation token, dry-run preview, and a guarded runner path for workspace duplication and agent registration. Execute-mode replication defaults to a 24-hour cadence unless explicitly overridden with reason.\n\nIncludes the Bob Johansson (Book 1) workspace templates, lineage docs, and the replicate skill in one bundle so ClawHub installs can bootstrap a Bob workspace without a separate repo clone.\n\nFor a generic version without the sci-fi theming, see the Agent Replicate skill on ClawHub.",
   "category": "creative",
   "tags": ["bobiverse", "personality", "multi-agent", "sci-fi", "workspace-management", "agent-setup"],
-  "version": "1.0.1",
+  "version": "1.1.0",
   "license": "MIT",
   "pricing": "free",
   "support_url": "https://github.com/TheAmericanMaker/bobiverse-openclaw/issues",
@@ -15,6 +15,8 @@
     "sandboxed": true,
     "scope": "agent-workspace-only",
     "network": false,
-    "human_in_the_loop": true
+    "human_in_the_loop": true,
+    "explicit_trigger_only": true,
+    "default_mode": "dry-run"
   }
 }

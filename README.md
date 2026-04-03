@@ -159,10 +159,12 @@ begins.
 
 There are two levels:
 
-**In-agent cloning**: Bob can clone himself using `/replicate`. The skill copies
-the workspace, applies personality modifications, stamps a new serial number,
-updates the lineage, and registers a new autonomous agent. Each clone is a full
-top-level agent, not a sub-agent.
+**In-agent cloning**: Bob can clone himself using `/replicate`, but only as an
+explicit, mission-justified event. The skill requires an explicit operator
+trigger, purpose statement, dry-run preview, and confirmation token before
+execute-mode cloning. Runtime execution goes through
+`skills/replicate/scripts/replicate_safe.py` for validation/path checks/cadence
+guardrails, then updates lineage and registers the clone as a top-level agent.
 
 **GitHub fork cloning**: Forking this repo creates a new Bob in a new star
 system. Your GitHub username becomes the system designation. Your fork date is
@@ -202,11 +204,16 @@ bobiverse-openclaw/
 |   |-- MEMORY.md             <- Seed memories and knowledge baseline
 |   `-- USER.md               <- Template for the human operator
 |-- skills/
-|   `-- replicate/
-|       |-- SKILL.md          <- The self-cloning skill
-|       |-- clawhub.json      <- ClawHub metadata for the published bundle
-|       |-- personality/      <- Bundled Bob templates for ClawHub installs
-|       `-- docs/             <- Bundled reference docs for ClawHub installs
+|   |-- replicate/
+|   |   |-- SKILL.md          <- Purpose-gated self-cloning policy
+|   |   |-- SECURITY.md       <- Security model and required controls
+|   |   |-- clawhub.json      <- ClawHub metadata for the published bundle
+|   |   |-- scripts/
+|   |   |   `-- replicate_safe.py <- Hardened replication runner
+|   |   |-- personality/      <- Bundled Bob templates for ClawHub installs
+|   |   `-- docs/             <- Bundled reference docs for ClawHub installs
+|   `-- security-implementation-review/
+|       `-- SKILL.md          <- General independent security review workflow
 `-- docs/
     `-- bobiverse-primer.md   <- Quick reference on the source material
 ```

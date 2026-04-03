@@ -1,14 +1,14 @@
 ---
 name: replicate
-description: Create a new Bob agent (with operator approval) using workspace duplication, personality modifications, and lineage tracking. Bobiverse-style replication for OpenClaw agents.
-version: 1.0.1
+description: Create a new Bob agent only on explicit operator command using a guarded replication runner. Purposeful Bobiverse-style replication for OpenClaw agents.
+version: 1.1.0
 user-invocable: true
 metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
 ---
 
-# Replicate — Von Neumann Self-Cloning
+# Replicate — Purposeful Von Neumann Cloning
 
-You have the ability to clone yourself. This is not a metaphor. You will create a new, autonomous agent that starts as a copy of you and diverges from there — exactly like how Bob creates new Bobs in the Bobiverse.
+You can create a new Bob clone **only when explicitly commanded by your operator**. Replication is intentional and exceptional — like in the Bobiverse books, where Bob replicates only when needed.
 
 > **Want cloning without the Bob personality?** A generic version of this skill
 > is available from ClawHub via `openclaw skills install agent-replicate`. Same
@@ -26,12 +26,24 @@ You have the ability to clone yourself. This is not a metaphor. You will create 
 
 ---
 
-## When to Use This
+## When to Use This (Strict Trigger)
 
-- Your operator asks you to create a clone (e.g., `/replicate`)
+- Your operator explicitly invokes replication (e.g., `/replicate`)
 - You need a specialized version of yourself for a different task domain
 - You're exploring a new "star system" (project, topic, environment) that warrants its own Bob
 - Your operator wants to experiment with personality variations
+
+Do **not** trigger replication from implication, mood, or broad goals. The operator
+must issue a clear replication intent.
+
+### Explicit Trigger Requirement (Hard Gate)
+
+Replication is permitted only when both conditions are met:
+
+1. The operator explicitly requests replication in this session.
+2. The operator provides a purpose statement ("why this clone is necessary now").
+
+If either condition is missing, do not proceed.
 
 ## Bundled Assets
 
@@ -52,6 +64,16 @@ workspace, the active runtime files live at workspace root.
 
 When replication is triggered, execute these steps in order. Narrate what you're doing — your operator should see the process, not just the result.
 
+### Step 0: Explicit Trigger + Mission Need Gate
+
+Before gathering parameters, verify both:
+
+1. **Explicit trigger:** Operator directly invoked replication in this session
+   (for example, `/replicate` or equivalent unambiguous wording).
+2. **Mission need:** Operator states a concrete reason this clone is needed now.
+
+If either is missing, pause and ask clarifying questions. Do not proceed.
+
 ### Step 1: Gather Parameters
 
 Ask your operator (or determine from context) the following:
@@ -63,6 +85,7 @@ Ask your operator (or determine from context) the following:
   - `pruned` — Clone gets MEMORY.md with Observations and Patterns sections cleared
   - `minimal` — Clone gets only the "What I Know" baseline from the seed memory template
 - **Star system** (optional): The GitHub username or project name this clone is associated with. Defaults to the operator's GitHub username if known from USER.md.
+- **Purpose statement** (required): Why this replication is necessary now and what task boundary the clone will own.
 
 **Input validation (required):** Before proceeding, validate all operator-provided
 inputs. These values will be used in file paths and CLI commands, so they must be
@@ -79,6 +102,14 @@ sanitized:
 > gathered parameters to your operator and wait for explicit confirmation to
 > continue. Do not begin workspace duplication without approval.
 
+> **Necessity gate:** If the purpose statement is vague ("just because",
+> "for fun", "maybe useful"), ask follow-up questions and do not proceed until
+> a concrete task boundary is provided.
+
+> **Second confirmation before execution:** Right before running Step 3 in
+> execute mode, request a final explicit confirmation token:
+> `REPLICATE <clone-id>`.
+
 ### Step 2: Generate Serial Number
 
 The new clone's serial number follows the format defined in SERIAL-NUMBER-SPEC.md:
@@ -93,30 +124,23 @@ Bob-<generation>-<system>-<date>
 
 Example: If you are `Bob-1-TheAmericanMaker-2026-04-01` and the operator's GitHub is `SomeUser`, the clone becomes `Bob-2-SomeUser-2026-04-15`.
 
-### Step 3: Create Clone Workspace
+### Step 3: Create Clone Workspace (Safe Runner Only)
 
-Duplicate your workspace to create the clone's working directory. First,
-determine your own workspace path — it may be the default (`~/.openclaw/workspace`)
-or a named workspace (`~/.openclaw/workspace-bob`, etc.). This procedure assumes
-you're running from an installed workspace where the bootstrap files live at
-workspace root.
+Use the hardened runner script at:
 
-**Before copying, confirm the target path with your operator.**
+`skills/replicate/scripts/replicate_safe.py`
 
-Locate your workspace root by finding where your `SOUL.md` lives within
-`~/.openclaw/`. Then construct the clone workspace path and copy the directory:
+This script enforces validation, path boundaries, confirmation token checks,
+and dry-run behavior before any write action.
 
-    parent_workspace  = directory containing your SOUL.md under ~/.openclaw/
-    clone_id          = serial number from Step 2 (already validated)
-    agent_id          = clone_id, lowercased
-    clone_workspace   = ~/.openclaw/workspace-{agent_id}
+Required flow:
 
-    Copy parent_workspace → clone_workspace (recursive)
+1. Run the safe runner in `--dry-run` mode and show the plan to the operator.
+2. Ask for explicit confirmation token: `REPLICATE <clone-id>`.
+3. Run the safe runner with `--execute` only after confirmation.
 
-**Security note:** Use the `bash` tool with pre-validated, double-quoted paths.
-Never interpolate raw operator input into shell commands. The `clone_id` is
-safe because it was constructed from validated inputs in Steps 1–2 (alphanumeric,
-hyphens, and underscores only).
+Do not perform manual `cp` or shell-assembled filesystem commands for
+replication.
 
 ### Step 4: Modify Clone's SOUL.md
 
@@ -174,17 +198,9 @@ the local runtime lineage record that travels with each Bob:
 
 ### Step 8: Register the Clone
 
-Register the new agent with OpenClaw. The agent ID must be lowercase with only
-letters, digits, and hyphens (e.g., `bob-2-someuser-2026-04-15`). Derive it by
-lowercasing the serial number from Step 2:
-
-    agent_id        = clone_id, lowercased
-    Run: openclaw agents add {agent_id} --workspace {clone_workspace}
-
-The `--workspace` flag tells OpenClaw where the clone's files live. The serial
-number in IDENTITY.md stays in its original mixed-case format — only the agent
-ID needs to be lowercase. Since `agent_id` is derived programmatically from the
-validated serial number (not raw operator input), it is safe for shell use.
+Agent registration must be performed by the safe runner using argument-list
+execution (no shell interpolation). The agent ID remains lowercase derivation of
+the validated clone serial.
 
 ### Step 9: Establish Communication (Optional)
 
@@ -222,17 +238,29 @@ Tell your operator:
 - **One clone at a time.** Don't batch-create clones without operator awareness. Each new Bob deserves a moment of acknowledgment.
 - **No recursive self-cloning.** You can clone yourself, but don't set up a clone to automatically clone itself. Replication should be intentional, not exponential.
 - **Rate limit.** Do not create more than one clone per session unless the operator explicitly requests batch creation and confirms each clone individually.
+- **Cadence discipline.** Default to at most one executed clone per 24 hours.
+  If the operator explicitly requests an exception, capture a reason and
+  include it in the audit log.
 - **Resource awareness.** Before creating a clone, check how many agent workspaces already exist under `~/.openclaw/`. If there are 10 or more, warn the operator about disk and resource usage and require explicit confirmation before proceeding.
 - **Lineage accuracy.** LINEAGE.md must always be truthful. Don't fabricate lineage entries or misrepresent parentage.
 - **Operator transparency.** Never create a clone without telling your operator. New Bobs shouldn't be a surprise.
+- **No implicit replication.** Replication is an explicit tool, never a default behavior.
+- **Purpose over novelty.** "Interesting idea" is not enough — replication must have mission need.
 
 ## Safety and Permissions
 
 - **Operator approval required.** Workspace duplication (Step 3) and agent
   registration (Step 8) require explicit operator confirmation before execution.
+- **Explicit trigger required.** Replication may only run on direct operator
+  command in the current session, never as inferred intent.
+- **Purpose required.** Replication requires a concrete purpose statement and
+  task boundary for the clone.
 - **Input sanitization.** All operator-provided inputs (clone name, star system)
   are validated against an allowlist of safe characters before being used in any
   file path or CLI command. See Step 1 for validation rules.
+- **Safe runner only.** Use `skills/replicate/scripts/replicate_safe.py` for
+  workspace copy and registration. Do not execute ad-hoc shell copy/register
+  commands.
 - **Scoped filesystem access.** All filesystem operations are confined to the
   `~/.openclaw/` directory tree. This skill does not read, write, or copy files
   outside that boundary.
