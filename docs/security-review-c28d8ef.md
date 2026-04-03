@@ -99,3 +99,14 @@ Adopt a **two-layer model**:
 ### Practical conclusion
 
 c28d8ef is **partially aligned** with OpenClaw/ClawHub best practices, but it is **not fully aligned with hardened-skill practice** until the risky steps are mediated by an audited, shell-safe runner and strict runtime enforcement.
+
+## Update: v1.1.0 purposeful replication hardening
+
+The repository now implements the previously recommended hardened path:
+
+- Explicit Step 0 mission gate in `SKILL.md` (explicit operator trigger + concrete mission need).
+- Mandatory safe runner (`skills/replicate/scripts/replicate_safe.py`) for copy/register operations.
+- Default dry-run + execute confirmation token enforcement.
+- Default 24-hour execute cadence with explicit override reason capture in audit logs.
+
+This moves controls from policy prose into enforceable runtime behavior while preserving the Bobiverse replication concept.
