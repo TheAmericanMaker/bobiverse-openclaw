@@ -27,9 +27,12 @@ Maintain the Bobiverse replication concept while ensuring replication is an expl
 
 7. **Rate/resource guardrails**
    - Warn/block when workspace count is high unless explicitly acknowledged.
+   - Enforce a default 24-hour cooldown between execute-mode replications unless
+     operator provides explicit override reason.
 
 8. **Auditability**
    - Replication actions are recorded in `~/.openclaw/replication-audit.log`.
+   - Cooldown override reason is captured in the audit entry when used.
 
 ## Implementation Requirement
 

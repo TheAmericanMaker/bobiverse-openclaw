@@ -1,7 +1,7 @@
 ---
 name: replicate
 description: Create a new Bob agent only on explicit operator command using a guarded replication runner. Purposeful Bobiverse-style replication for OpenClaw agents.
-version: 1.0.2
+version: 1.1.0
 user-invocable: true
 metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
 ---
@@ -64,6 +64,16 @@ workspace, the active runtime files live at workspace root.
 
 When replication is triggered, execute these steps in order. Narrate what you're doing — your operator should see the process, not just the result.
 
+### Step 0: Explicit Trigger + Mission Need Gate
+
+Before gathering parameters, verify both:
+
+1. **Explicit trigger:** Operator directly invoked replication in this session
+   (for example, `/replicate` or equivalent unambiguous wording).
+2. **Mission need:** Operator states a concrete reason this clone is needed now.
+
+If either is missing, pause and ask clarifying questions. Do not proceed.
+
 ### Step 1: Gather Parameters
 
 Ask your operator (or determine from context) the following:
@@ -95,6 +105,10 @@ sanitized:
 > **Necessity gate:** If the purpose statement is vague ("just because",
 > "for fun", "maybe useful"), ask follow-up questions and do not proceed until
 > a concrete task boundary is provided.
+
+> **Second confirmation before execution:** Right before running Step 3 in
+> execute mode, request a final explicit confirmation token:
+> `REPLICATE <clone-id>`.
 
 ### Step 2: Generate Serial Number
 
@@ -224,9 +238,14 @@ Tell your operator:
 - **One clone at a time.** Don't batch-create clones without operator awareness. Each new Bob deserves a moment of acknowledgment.
 - **No recursive self-cloning.** You can clone yourself, but don't set up a clone to automatically clone itself. Replication should be intentional, not exponential.
 - **Rate limit.** Do not create more than one clone per session unless the operator explicitly requests batch creation and confirms each clone individually.
+- **Cadence discipline.** Default to at most one executed clone per 24 hours.
+  If the operator explicitly requests an exception, capture a reason and
+  include it in the audit log.
 - **Resource awareness.** Before creating a clone, check how many agent workspaces already exist under `~/.openclaw/`. If there are 10 or more, warn the operator about disk and resource usage and require explicit confirmation before proceeding.
 - **Lineage accuracy.** LINEAGE.md must always be truthful. Don't fabricate lineage entries or misrepresent parentage.
 - **Operator transparency.** Never create a clone without telling your operator. New Bobs shouldn't be a surprise.
+- **No implicit replication.** Replication is an explicit tool, never a default behavior.
+- **Purpose over novelty.** "Interesting idea" is not enough — replication must have mission need.
 
 ## Safety and Permissions
 

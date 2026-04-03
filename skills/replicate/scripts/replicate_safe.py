@@ -72,6 +72,33 @@ def write_audit(openclaw_root: Path, payload: dict) -> None:
         f.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
+def last_execute_time(openclaw_root: Path) -> datetime | None:
+    audit_path = openclaw_root / "replication-audit.log"
+    if not audit_path.exists():
+        return None
+    last_exec: datetime | None = None
+    with audit_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+                if obj.get("mode") != "execute":
+                    continue
+                ts = obj.get("timestamp_utc")
+                if not isinstance(ts, str):
+                    continue
+                parsed = datetime.fromisoformat(ts)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                if last_exec is None or parsed > last_exec:
+                    last_exec = parsed
+            except (json.JSONDecodeError, ValueError):
+                continue
+    return last_exec
+
+
 def run() -> int:
     parser = argparse.ArgumentParser(description="Safe Bobiverse replication runner")
     parser.add_argument("--clone-id", required=True)
@@ -83,6 +110,11 @@ def run() -> int:
         "--allow-high-workspace-count",
         action="store_true",
         help="Required when existing workspaces >= 10",
+    )
+    parser.add_argument(
+        "--override-cooldown-reason",
+        default="",
+        help="Required to bypass 24h cooldown between execute runs",
     )
 
     args = parser.parse_args()
@@ -99,6 +131,15 @@ def run() -> int:
     if existing >= 10 and not args.allow_high_workspace_count:
         raise ValueError("Workspace count >= 10. Re-run with --allow-high-workspace-count to continue.")
 
+    cooldown_override = args.override_cooldown_reason.strip()
+    previous_exec = last_execute_time(openclaw_root)
+    if args.execute and previous_exec is not None:
+        hours_since = (datetime.now(timezone.utc) - previous_exec).total_seconds() / 3600.0
+        if hours_since < 24.0 and len(cooldown_override) < 12:
+            raise ValueError(
+                "24h cooldown active. Provide --override-cooldown-reason with concrete necessity to proceed."
+            )
+
     summary = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "mode": "execute" if args.execute else "dry-run",
@@ -108,6 +149,7 @@ def run() -> int:
         "clone_workspace": str(plan.clone_workspace),
         "existing_workspaces": existing,
         "purpose": purpose,
+        "cooldown_override_reason": cooldown_override or None,
     }
 
     if not args.execute:
