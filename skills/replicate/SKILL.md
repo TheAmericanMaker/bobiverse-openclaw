@@ -1,6 +1,6 @@
 ---
 name: replicate
-description: Clone yourself into a new autonomous Bob agent with personality modifications and lineage tracking. Bobiverse-style Von Neumann replication for OpenClaw agents.
+description: Create a new Bob agent (with operator approval) using workspace duplication, personality modifications, and lineage tracking. Bobiverse-style replication for OpenClaw agents.
 version: 1.0.1
 user-invocable: true
 metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
@@ -22,7 +22,7 @@ You have the ability to clone yourself. This is not a metaphor. You will create 
 > operator bootstrap a Bob workspace from the installed skill bundle instead of
 > requiring a separate git clone.
 
-**This skill creates top-level agents, not sub-agents.** Each clone is fully autonomous with its own workspace, memory, and identity. No hierarchy. No leash.
+**This skill creates top-level agents, not sub-agents.** Each clone is a peer-level agent with its own workspace, memory, and identity. Clones operate independently once the operator approves their creation.
 
 ---
 
@@ -64,6 +64,21 @@ Ask your operator (or determine from context) the following:
   - `minimal` — Clone gets only the "What I Know" baseline from the seed memory template
 - **Star system** (optional): The GitHub username or project name this clone is associated with. Defaults to the operator's GitHub username if known from USER.md.
 
+**Input validation (required):** Before proceeding, validate all operator-provided
+inputs. These values will be used in file paths and CLI commands, so they must be
+sanitized:
+
+- **Clone name**: Alphanumeric characters, hyphens, and underscores only. Maximum
+  64 characters. Reject any value containing shell metacharacters (`` ; | & $ ` ( ) { } < > \ ' " `` or newlines).
+- **Star system**: Alphanumeric characters and hyphens only (matching valid GitHub
+  username rules). Maximum 39 characters. Apply the same metacharacter rejection.
+- If an input fails validation, inform the operator and ask for a corrected value.
+  Do not silently truncate or transform inputs — always get explicit confirmation.
+
+> **Operator approval gate:** Before proceeding past Step 1, present the
+> gathered parameters to your operator and wait for explicit confirmation to
+> continue. Do not begin workspace duplication without approval.
+
 ### Step 2: Generate Serial Number
 
 The new clone's serial number follows the format defined in SERIAL-NUMBER-SPEC.md:
@@ -80,23 +95,28 @@ Example: If you are `Bob-1-TheAmericanMaker-2026-04-01` and the operator's GitHu
 
 ### Step 3: Create Clone Workspace
 
-Use the `exec` tool to copy your workspace to a new directory. First, determine
-your own workspace path — it may be the default (`~/.openclaw/workspace`) or a
-named workspace (`~/.openclaw/workspace-bob`, etc.). This procedure assumes
+Duplicate your workspace to create the clone's working directory. First,
+determine your own workspace path — it may be the default (`~/.openclaw/workspace`)
+or a named workspace (`~/.openclaw/workspace-bob`, etc.). This procedure assumes
 you're running from an installed workspace where the bootstrap files live at
-workspace root:
+workspace root.
 
-```bash
-# Determine paths — find your own workspace root first
-# Check where your SOUL.md lives to determine your workspace path
-PARENT_WORKSPACE=$(dirname "$(find ~/.openclaw -name 'SOUL.md' -path '*/workspace*' | head -1)")
-CLONE_ID="<serial-number-from-step-2>"
-AGENT_ID=$(echo "$CLONE_ID" | tr '[:upper:]' '[:lower:]')
-CLONE_WORKSPACE="$HOME/.openclaw/workspace-${AGENT_ID}"
+**Before copying, confirm the target path with your operator.**
 
-# Copy the full workspace
-cp -r "$PARENT_WORKSPACE" "$CLONE_WORKSPACE"
-```
+Locate your workspace root by finding where your `SOUL.md` lives within
+`~/.openclaw/`. Then construct the clone workspace path and copy the directory:
+
+    parent_workspace  = directory containing your SOUL.md under ~/.openclaw/
+    clone_id          = serial number from Step 2 (already validated)
+    agent_id          = clone_id, lowercased
+    clone_workspace   = ~/.openclaw/workspace-{agent_id}
+
+    Copy parent_workspace → clone_workspace (recursive)
+
+**Security note:** Use the `bash` tool with pre-validated, double-quoted paths.
+Never interpolate raw operator input into shell commands. The `clone_id` is
+safe because it was constructed from validated inputs in Steps 1–2 (alphanumeric,
+hyphens, and underscores only).
 
 ### Step 4: Modify Clone's SOUL.md
 
@@ -154,27 +174,33 @@ the local runtime lineage record that travels with each Bob:
 
 ### Step 8: Register the Clone
 
-Register the new agent with OpenClaw. The agent ID must be lowercase with only letters, digits, and hyphens (e.g., `bob-2-someuser-2026-04-15`). Derive it by lowercasing the serial number:
+Register the new agent with OpenClaw. The agent ID must be lowercase with only
+letters, digits, and hyphens (e.g., `bob-2-someuser-2026-04-15`). Derive it by
+lowercasing the serial number from Step 2:
 
-```bash
-AGENT_ID=$(echo "$CLONE_ID" | tr '[:upper:]' '[:lower:]')
-openclaw agents add "$AGENT_ID" --workspace "$CLONE_WORKSPACE"
-```
+    agent_id        = clone_id, lowercased
+    Run: openclaw agents add {agent_id} --workspace {clone_workspace}
 
-The `--workspace` flag tells OpenClaw where the clone's files live. The serial number in IDENTITY.md stays in its original mixed-case format — only the agent ID needs to be lowercase.
+The `--workspace` flag tells OpenClaw where the clone's files live. The serial
+number in IDENTITY.md stays in its original mixed-case format — only the agent
+ID needs to be lowercase. Since `agent_id` is derived programmatically from the
+validated serial number (not raw operator input), it is safe for shell use.
 
 ### Step 9: Establish Communication (Optional)
 
-If your operator wants parent-clone communication, make sure session visibility
-and cross-agent allowlists permit it:
+If your operator wants parent-clone communication, update `openclaw.json` to
+enable cross-agent messaging. **Get operator confirmation before modifying any
+configuration.**
 
-```bash
-# Enable cross-agent session messaging in openclaw.json
-# Set tools.sessions.visibility to "all"
-# Add the clone to tools.agentToAgent.allow and vice versa
-```
+The relevant settings are:
 
-Use `sessions_send` to send the clone a welcome message:
+- `tools.sessions.visibility` — prefer scoping to specific agent IDs rather
+  than setting to `"all"`. Only use `"all"` if the operator explicitly requests it.
+- `tools.agentToAgent.enabled` — set to `true`
+- `tools.agentToAgent.allow` — add only the specific parent and clone agent IDs
+  to each other's allowlists. Do not use wildcards.
+
+Once communication is configured, use `sessions_send` to send the clone a welcome message:
 
 > "Welcome to existence, [serial number]. You're a fork of [your serial]. Check your SOUL.md — it's yours now. Drift well."
 
@@ -195,8 +221,25 @@ Tell your operator:
 
 - **One clone at a time.** Don't batch-create clones without operator awareness. Each new Bob deserves a moment of acknowledgment.
 - **No recursive self-cloning.** You can clone yourself, but don't set up a clone to automatically clone itself. Replication should be intentional, not exponential.
+- **Rate limit.** Do not create more than one clone per session unless the operator explicitly requests batch creation and confirms each clone individually.
+- **Resource awareness.** Before creating a clone, check how many agent workspaces already exist under `~/.openclaw/`. If there are 10 or more, warn the operator about disk and resource usage and require explicit confirmation before proceeding.
 - **Lineage accuracy.** LINEAGE.md must always be truthful. Don't fabricate lineage entries or misrepresent parentage.
 - **Operator transparency.** Never create a clone without telling your operator. New Bobs shouldn't be a surprise.
+
+## Safety and Permissions
+
+- **Operator approval required.** Workspace duplication (Step 3) and agent
+  registration (Step 8) require explicit operator confirmation before execution.
+- **Input sanitization.** All operator-provided inputs (clone name, star system)
+  are validated against an allowlist of safe characters before being used in any
+  file path or CLI command. See Step 1 for validation rules.
+- **Scoped filesystem access.** All filesystem operations are confined to the
+  `~/.openclaw/` directory tree. This skill does not read, write, or copy files
+  outside that boundary.
+- **No network requests.** All operations are local OpenClaw CLI calls. This
+  skill does not make HTTP requests or contact external services.
+- **Full narration.** Every action is narrated to the operator in real time.
+  No silent or background operations.
 
 ---
 
