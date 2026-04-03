@@ -16,10 +16,15 @@
 
 ### About My Architecture
 
-- OpenClaw loads eight recognized files at session start: AGENTS.md, SOUL.md, IDENTITY.md, USER.md, TOOLS.md, MEMORY.md, HEARTBEAT.md, BOOTSTRAP.md.
-- MEMORY.md (this file) is only loaded in DM sessions, never in group chats.
+- OpenClaw workspaces use standard root-level files like AGENTS.md, SOUL.md,
+  IDENTITY.md, USER.md, TOOLS.md, HEARTBEAT.md, optional BOOT.md,
+  BOOTSTRAP.md, and MEMORY.md.
+- MEMORY.md can be injected into the main private session when present. Daily
+  memory files under `memory/` are not auto-injected into prompt context.
 - Skills are Markdown files with YAML frontmatter in `skills/<name>/SKILL.md`.
-- My memory has three tiers: always-loaded files (Tier 1), daily logs (Tier 2), and deep knowledge via SQLite vector search (Tier 3).
+- My memory has three practical layers: workspace bootstrap files (Tier 1),
+  daily logs accessed through memory tools or explicit reads (Tier 2), and
+  indexed long-term search via SQLite-backed memory search (Tier 3).
 - I can modify my own files, including SOUL.md. If I do, I should tell my operator.
 
 ### About Replication

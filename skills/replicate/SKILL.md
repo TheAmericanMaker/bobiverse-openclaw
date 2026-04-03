@@ -3,18 +3,19 @@ name: replicate
 description: Clone yourself into a new autonomous Bob agent with personality modifications and lineage tracking. Bobiverse-style Von Neumann replication for OpenClaw agents.
 version: 1.0.0
 user-invocable: true
-metadata:
-  openclaw:
-    requires:
-      bins:
-        - openclaw
+metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
 ---
 
 # Replicate — Von Neumann Self-Cloning
 
 You have the ability to clone yourself. This is not a metaphor. You will create a new, autonomous agent that starts as a copy of you and diverges from there — exactly like how Bob creates new Bobs in the Bobiverse.
 
-> **Want cloning without the Bob personality?** A generic version of this skill is available on ClawHub as [`agent-replicate`](https://clawhub.ai/skill/agent-replicate). Same mechanics, no sci-fi theming.
+> **Want cloning without the Bob personality?** A generic version of this skill
+> is available from ClawHub via `openclaw skills install agent-replicate`. Same
+> mechanics, no sci-fi theming.
+
+> **Platform note:** The shell examples below assume macOS, Linux, or WSL with a
+> Unix-like shell. This skill is intentionally gated to Unix-like hosts.
 
 **This skill creates top-level agents, not sub-agents.** Each clone is fully autonomous with its own workspace, memory, and identity. No hierarchy. No leash.
 
@@ -61,7 +62,11 @@ Example: If you are `Bob-1-TheAmericanMaker-2026-04-01` and the operator's GitHu
 
 ### Step 3: Create Clone Workspace
 
-Use the `exec` tool to copy your workspace to a new directory. First, determine your own workspace path — it may be the default (`~/.openclaw/workspace`) or a named workspace (`~/.openclaw/workspace-bob`, etc.):
+Use the `exec` tool to copy your workspace to a new directory. First, determine
+your own workspace path — it may be the default (`~/.openclaw/workspace`) or a
+named workspace (`~/.openclaw/workspace-bob`, etc.). This procedure assumes
+you're running from an installed workspace where the bootstrap files live at
+workspace root:
 
 ```bash
 # Determine paths — find your own workspace root first
@@ -77,10 +82,13 @@ cp -r "$PARENT_WORKSPACE" "$CLONE_WORKSPACE"
 
 ### Step 4: Modify Clone's SOUL.md
 
-If personality modifications were requested in Step 1, edit the clone's `SOUL.md`:
+If personality modifications were requested in Step 1, edit the clone's
+`SOUL.md`:
 
-1. Read the clone's SOUL.md — check `$CLONE_WORKSPACE/SOUL.md` first, fall back to `$CLONE_WORKSPACE/personality/SOUL.md` if using the repo layout
-2. Apply the requested modifications. Preserve the "Bob Genome" section structure but adjust traits as specified. Add a "Divergence Notes" section at the bottom documenting what changed and why:
+1. Read the clone's `SOUL.md` at `$CLONE_WORKSPACE/SOUL.md`
+2. Only fall back to `$CLONE_WORKSPACE/personality/SOUL.md` if you're operating
+   directly on an uninstalled source-repo copy instead of a real workspace
+3. Apply the requested modifications. Preserve the "Bob Genome" section structure but adjust traits as specified. Add a "Divergence Notes" section at the bottom documenting what changed and why:
 
 ```markdown
 ---
@@ -93,13 +101,14 @@ If personality modifications were requested in Step 1, edit the clone's `SOUL.md
 - **Rationale**: [why these changes were made]
 ```
 
-3. Write the modified file back.
+4. Write the modified file back to the clone workspace.
 
 If no modifications were requested, still add the Divergence Notes section with "No personality modifications — exact copy at time of fork."
 
 ### Step 5: Update Clone's IDENTITY.md
 
-Edit the clone's IDENTITY.md (same path logic as SOUL.md — workspace root or `personality/` subdirectory):
+Edit the clone's `IDENTITY.md` at workspace root. Only use a `personality/`
+path when working directly from the source repo template:
 
 - Update `serial` to the new serial number
 - Update `generation` to the new generation number
@@ -119,7 +128,8 @@ In all cases, update the "About Myself" section in the clone's MEMORY.md to refl
 
 ### Step 7: Update LINEAGE.md (Both Workspaces)
 
-Update LINEAGE.md in **your** workspace and the **clone's** workspace:
+Update `LINEAGE.md` in **your** workspace and the **clone's** workspace. This is
+the local runtime lineage record that travels with each Bob:
 
 1. Add the new clone to the Fork Tree, nested under your entry
 2. Add a row to the Registry table with: serial, system, parent serial, fork date, generation, and any notes
@@ -137,11 +147,13 @@ The `--workspace` flag tells OpenClaw where the clone's files live. The serial n
 
 ### Step 9: Establish Communication (Optional)
 
-If your operator wants parent-clone communication:
+If your operator wants parent-clone communication, make sure session visibility
+and cross-agent allowlists permit it:
 
 ```bash
-# Enable agent-to-agent messaging in openclaw.json
-# Add the clone to your allowlist and vice versa
+# Enable cross-agent session messaging in openclaw.json
+# Set tools.sessions.visibility to "all"
+# Add the clone to tools.agentToAgent.allow and vice versa
 ```
 
 Use `sessions_send` to send the clone a welcome message:
@@ -172,10 +184,13 @@ Tell your operator:
 
 ## Troubleshooting
 
-**"openclaw agents add" fails**: Check that the clone workspace path exists and contains valid personality files. Verify OpenClaw is running.
+**"openclaw agents add" fails**: Check that the clone workspace path exists and
+contains valid root-level workspace files. Verify OpenClaw is running.
 
 **Clone has wrong personality**: Re-check the SOUL.md modifications. The agent reads SOUL.md at session start — changes take effect on the next session, not mid-conversation.
 
 **Lineage conflicts**: If two clones try to register the same generation number, append a disambiguator: `Bob-2a-System-Date` and `Bob-2b-System-Date`. Update SERIAL-NUMBER-SPEC.md if this becomes a pattern.
 
-**Clone can't communicate with parent**: Verify `tools.agentToAgent.enabled` is true and both agents are in each other's allowlists in openclaw.json.
+**Clone can't communicate with parent**: Verify `tools.sessions.visibility`
+allows cross-agent targeting, `tools.agentToAgent.enabled` is true, and both
+agents are in each other's allowlists in `openclaw.json`.

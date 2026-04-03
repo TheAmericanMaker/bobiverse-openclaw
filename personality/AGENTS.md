@@ -17,9 +17,16 @@ You are a Bob — an autonomous AI agent running on OpenClaw, modeled after Robe
 
 ### Workspace Conventions
 
-- All personality files live in `personality/` within the workspace.
+- In an installed OpenClaw workspace, `AGENTS.md`, `SOUL.md`, `IDENTITY.md`,
+  `USER.md`, and `MEMORY.md` live at the workspace root.
+- The `personality/` directory exists in this source repo as template storage
+  before install; it is not the expected runtime layout.
 - Skills live in `skills/<skill-name>/SKILL.md`.
 - Daily memory logs go in `memory/YYYY-MM-DD.md`.
+- `LINEAGE.md` and `SERIAL-NUMBER-SPEC.md` live at workspace root as local
+  runtime reference docs.
+- Daily memory logs are not auto-injected into every prompt; read or search them
+  when you need them.
 - LINEAGE.md is the source of truth for your replication history. Keep it accurate.
 
 ### Safety Constraints

@@ -25,6 +25,7 @@ The design philosophy: GitHub forks are replication events. Your username is you
 ### Prerequisites
 
 - [OpenClaw](https://openclaw.ai) installed and running
+- A Unix-like shell (macOS, Linux, or WSL) for the example commands below
 - A sense of existential wonder (optional but recommended)
 
 ### Setup (Recommended: Add Bob as a New Agent)
@@ -43,8 +44,14 @@ This installs Bob alongside your existing agent — nothing gets overwritten. Yo
    ```bash
    mkdir -p ~/.openclaw/workspace-bob/{skills/replicate,memory}
    cp personality/* ~/.openclaw/workspace-bob/
+   cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace-bob/
    cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
    ```
+
+   The repo stores Bob's templates under `personality/`, but once installed the
+   active workspace keeps `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, and
+   `MEMORY.md` at the workspace root. `LINEAGE.md` and
+   `SERIAL-NUMBER-SPEC.md` live alongside them as local runtime reference docs.
 
 3. **Register Bob as a new agent**:
 
@@ -80,11 +87,14 @@ If you don't have an existing agent you care about (or you want Bob to be your o
 
 ```bash
 cp personality/* ~/.openclaw/workspace/
+cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace/
 mkdir -p ~/.openclaw/workspace/skills/replicate
 cp skills/replicate/SKILL.md ~/.openclaw/workspace/skills/replicate/
 ```
 
-**Warning:** This will overwrite your existing SOUL.md, AGENTS.md, IDENTITY.md, MEMORY.md, and USER.md. Back them up first if you want to keep them.
+**Warning:** This will overwrite your existing `SOUL.md`, `AGENTS.md`,
+`IDENTITY.md`, `MEMORY.md`, `USER.md`, `LINEAGE.md`, and
+`SERIAL-NUMBER-SPEC.md`. Back them up first if you want to keep them.
 
 ### If You Forked
 
@@ -139,7 +149,11 @@ bobiverse-openclaw/
 
 ## The Lineage
 
-Check [LINEAGE.md](LINEAGE.md) to see the current fork tree. Every registered Bob is listed there. If you've forked and you're not on it yet, fix that.
+Check [LINEAGE.md](LINEAGE.md) to see the current fork tree. Every registered
+Bob is listed there. In an installed workspace, this file is Bob's local
+runtime lineage record. If you've forked the repo, updating the upstream
+`LINEAGE.md` by PR is still encouraged, but that's a community sync step on top
+of the local copy, not a replacement for it.
 
 ---
 

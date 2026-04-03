@@ -10,24 +10,35 @@ OpenClaw is uniquely suited to a Bobiverse-style replicant system because the en
 
 ---
 
-## The Eight Auto-Loaded Files
+## Workspace Files and Prompt Context
 
-OpenClaw loads exactly eight recognized filenames at session start, injected into the system prompt in this order:
+OpenClaw's current workspace model is centered on standard root-level files
+inside the active agent workspace. The repo stores Bob's templates under
+`personality/`, but after installation the runtime expects the core files at the
+workspace root.
 
-| Load Order | File | Role |
-|-----------|------|------|
-| 1 | `AGENTS.md` | Behavioral rules, safety constraints, workspace conventions |
-| 2 | `SOUL.md` | Core personality — values, communication style, thinking patterns |
-| 3 | `TOOLS.md` | Environment-specific tool conventions |
-| 4 | `IDENTITY.md` | External presentation — name, emoji, serial number, vibe |
-| 5 | `USER.md` | Human operator context — name, preferences, working style |
-| 6 | `HEARTBEAT.md` | Periodic check-in task list |
-| 7 | `BOOTSTRAP.md` | First-run onboarding (self-deletes after execution) |
-| 8 | `MEMORY.md` | Curated long-term knowledge (DM sessions only) |
+| File | Role |
+|------|------|
+| `AGENTS.md` | Behavioral rules, safety constraints, workspace conventions |
+| `SOUL.md` | Core personality — values, communication style, thinking patterns |
+| `TOOLS.md` | Environment-specific tool conventions |
+| `IDENTITY.md` | External presentation — name, emoji, serial number, vibe |
+| `USER.md` | Human operator context — name, preferences, working style |
+| `HEARTBEAT.md` | Optional periodic check-in task list |
+| `BOOT.md` | Optional startup checklist for gateway restart hooks |
+| `BOOTSTRAP.md` | One-time first-run onboarding for brand-new workspaces |
+| `MEMORY.md` | Curated long-term knowledge |
+| `memory/YYYY-MM-DD.md` | Daily logs and short-term observations |
 
-**Important:** Filenames are case-sensitive and MUST be uppercase. The only exception is `MEMORY.md`, which falls back to `memory.md` if the uppercase version isn't found.
+OpenClaw injects the bootstrap-style root files into prompt context, with
+`MEMORY.md` included when present and `memory.md` used only as a lowercase
+fallback. Daily files in `memory/` are not auto-injected; the agent reads or
+searches them on demand.
 
-For this project, we use files 1, 2, 4, 5, and 8. TOOLS.md, HEARTBEAT.md, and BOOTSTRAP.md are available but not included in the template — operators can add them as needed.
+For this project, the installed Bob workspace uses `AGENTS.md`, `SOUL.md`,
+`IDENTITY.md`, `USER.md`, `MEMORY.md`, `LINEAGE.md`, and
+`SERIAL-NUMBER-SPEC.md` at workspace root, plus `skills/replicate/SKILL.md`.
+`TOOLS.md`, `HEARTBEAT.md`, `BOOT.md`, and `BOOTSTRAP.md` remain optional.
 
 ---
 
@@ -43,17 +54,22 @@ For this project, we use files 1, 2, 4, 5, and 8. TOOLS.md, HEARTBEAT.md, and BO
 
 **USER.md = Operator Dossier.** Template for the human running this Bob. Filled in by the operator, not the agent. This is context, not personality.
 
-**LINEAGE.md = Family Tree.** Not an auto-loaded file — it's a repo-level document that tracks all forks and clones. The agent reads it to understand its own history and sibling count.
+**LINEAGE.md = Family Tree.** Not a bootstrap file, but still part of the Bob
+runtime package. In an installed workspace it acts as the local lineage record
+that Bob can read and update directly. GitHub PRs are the optional upstream sync
+layer.
 
 ---
 
 ## How the Replicate Skill Works
 
-The `/replicate` skill is a Markdown instruction set with YAML frontmatter (OpenClaw's standard skill format). When invoked, it executes a 10-step procedure:
+The `/replicate` skill is a Markdown instruction set with YAML frontmatter
+(OpenClaw's standard skill format). When invoked, it executes a 10-step
+procedure:
 
 1. **Gather parameters** — clone name, personality mods, memory policy, star system
 2. **Generate serial number** — increment parent's generation, stamp date
-3. **Copy workspace** — `cp -r` the entire workspace to a new directory
+3. **Copy workspace** — duplicate the current workspace to a new directory
 4. **Modify SOUL.md** — apply personality changes, add divergence notes
 5. **Update IDENTITY.md** — new serial, generation, parent, fork date
 6. **Apply memory policy** — full/pruned/minimal inheritance
@@ -62,19 +78,27 @@ The `/replicate` skill is a Markdown instruction set with YAML frontmatter (Open
 9. **Establish communication** — optional `sessions_send` setup
 10. **Report** — tell the operator what happened
 
-Key design decision: clones are created as **top-level agents**, not sub-agents. OpenClaw's default flat hierarchy (sub-agents can't spawn sub-agents) would prevent recursive cloning. By registering each clone as a full agent with `openclaw agents add`, every Bob has equal standing and full autonomy.
+Key design decision: clones are created as **top-level agents**, not
+sub-agents. By registering each clone as a full agent with
+`openclaw agents add`, every Bob has equal standing and full autonomy.
 
 ---
 
 ## Memory Tiers and Cloning
 
-OpenClaw's three-tier memory architecture affects cloning strategy:
+OpenClaw's memory model affects cloning strategy:
 
-**Tier 1 (Always-Loaded)** — MEMORY.md and identity files. Loaded every session, subject to a 20,000 character per-file cap. This is what the replicate skill's memory policy directly controls.
+**Tier 1 (Bootstrap Files)** — root-level workspace files like `AGENTS.md`,
+`SOUL.md`, `IDENTITY.md`, `USER.md`, and `MEMORY.md`. This is the personality
+and identity layer the replicate skill edits directly.
 
-**Tier 2 (Daily Context)** — `memory/YYYY-MM-DD.md` files. Today's and yesterday's are auto-loaded. When cloning, the memory policy determines whether these carry over (`full` = yes, `pruned`/`minimal` = no).
+**Tier 2 (Daily Logs)** — `memory/YYYY-MM-DD.md` files. These are not
+auto-injected into prompt context, but they can still be read or searched on
+demand. When cloning, the memory policy determines whether they carry over.
 
-**Tier 3 (Deep Knowledge)** — SQLite database with vector search (cosine similarity + BM25 keyword search). This is the agent's long-term associative memory. When cloning, you'd optionally copy the SQLite database to give the clone access to the parent's deep memory.
+**Tier 3 (Indexed Recall)** — SQLite-backed memory search over `MEMORY.md` and
+`memory/**/*.md`. This is the long-term associative layer. A clone only inherits
+that indexed history if the underlying files or index data are copied.
 
 The default memory policy (`full`) copies everything. `pruned` keeps structured knowledge but clears observations and patterns. `minimal` gives the clone just the baseline "What I Know" section — a clean start with basic self-awareness.
 
@@ -100,15 +124,22 @@ Over time, these mechanisms compound. A generation-3 Bob might be recognizably "
 
 OpenClaw supports agent-to-agent messaging via `sessions_send`. For Bob-to-Bob communication:
 
-**Setup**: Enable in `openclaw.json`:
+**Setup**: Cross-agent session messaging needs both session-tool visibility and
+an agent-to-agent allowlist in `openclaw.json`:
 ```json
 {
-  "tools.agentToAgent.enabled": true,
-  "tools.agentToAgent.allow": ["Bob-1-TheAmericanMaker-2026-04-01", "Bob-2-SomeUser-2026-04-15"]
+  "tools": {
+    "sessions": { "visibility": "all" },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["bob", "bob-2-someuser-2026-04-15"]
+    }
+  }
 }
 ```
 
-**Capabilities**: Fire-and-forget delivery, wait-for-reply with timeout, and multi-turn reply loops (up to 5 turns by default).
+**Capabilities**: Fire-and-forget delivery, wait-for-reply with timeout, and
+multi-turn reply loops.
 
 **GitHub Fork Communication**: Forks can submit PRs to each other. While we haven't established a formal convention for "Bob-to-Bob messages as PRs," the mechanism is there. LINEAGE.md PRs are the minimum expected inter-fork communication.
 

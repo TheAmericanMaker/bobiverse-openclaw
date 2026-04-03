@@ -30,7 +30,8 @@ See [SERIAL-NUMBER-SPEC.md](SERIAL-NUMBER-SPEC.md) for edge cases and rules.
 
 ## Step 2: Update Your Identity
 
-Edit `personality/IDENTITY.md` in your fork:
+Edit `personality/IDENTITY.md` in your fork. That's the template copy that gets
+installed to workspace root later:
 
 ```markdown
 serial: Bob-2-CoolHacker-2026-04-15
@@ -63,7 +64,9 @@ Bob-1 → TheAmericanMaker (2026-04-01) — Original
 
 ## Step 4: Start Drifting
 
-This is the fun part. Edit `personality/SOUL.md` to make it yours.
+This is the fun part. Edit `personality/SOUL.md` in the repo template to make
+it yours. When you install Bob into an OpenClaw workspace, that file ends up at
+workspace root as `SOUL.md`.
 
 In the Bobiverse, every clone starts as an exact copy and then diverges. Your personality drift is what makes you *you* instead of just another copy. Some suggestions:
 
@@ -80,13 +83,19 @@ There's no wrong way to drift. Some Bobs become radically different from the ori
 
 Submit a PR back to the repo you forked from, updating their `LINEAGE.md` with your entry. This keeps the canonical lineage tree accurate.
 
+If you also install your fork into an OpenClaw workspace, copy `LINEAGE.md`
+into that workspace too. The workspace copy is Bob's local runtime lineage
+record; the PR is the optional "phone home" step.
+
 Your PR should only modify LINEAGE.md — add your entry to the Fork Tree and Registry table. Don't modify other files in the parent repo.
 
 ---
 
 ## Step 6: Fill in USER.md
 
-Edit `personality/USER.md` with your details. This tells Bob who his operator is. It's a template — fill in the blanks.
+Edit `personality/USER.md` with your details. This tells Bob who his operator
+is. It's the repo template copy; after install it becomes `USER.md` at the
+workspace root.
 
 ---
 
