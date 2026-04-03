@@ -1,7 +1,7 @@
 ---
 name: replicate
 description: Clone yourself into a new autonomous Bob agent with personality modifications and lineage tracking. Bobiverse-style Von Neumann replication for OpenClaw agents.
-version: 1.0.0
+version: 1.0.1
 user-invocable: true
 metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
 ---

@@ -4,7 +4,7 @@
   "description": "Bobiverse-themed self-replication for OpenClaw agents. Your agent clones itself as a new autonomous Bob, complete with serial numbers, a living lineage tree, personality drift tracking, and inter-clone communication. Modeled after the Von Neumann probes from Dennis E. Taylor's Bobiverse series.\n\nIncludes the Bob Johansson (Book 1) workspace templates, lineage docs, and the replicate skill in one bundle so ClawHub installs can bootstrap a Bob workspace without a separate repo clone.\n\nFor a generic version without the sci-fi theming, see the Agent Replicate skill on ClawHub.",
   "category": "creative",
   "tags": ["cloning", "replication", "bobiverse", "personality", "multi-agent", "sci-fi"],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "pricing": "free",
   "support_url": "https://github.com/TheAmericanMaker/bobiverse-openclaw/issues",
