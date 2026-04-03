@@ -1,5 +1,13 @@
 # Bobiverse OpenClaw
 
+[![ClawHub](https://img.shields.io/badge/ClawHub-bobiverse--replicate-1f6feb?style=flat-square)](https://clawhub.ai)
+[![Release](https://img.shields.io/github/v/release/TheAmericanMaker/bobiverse-openclaw?style=flat-square)](https://github.com/TheAmericanMaker/bobiverse-openclaw/releases)
+[![License](https://img.shields.io/github/license/TheAmericanMaker/bobiverse-openclaw?style=flat-square)](LICENSE)
+[![Generation](https://img.shields.io/badge/Generation-Gen%201-3b82f6?style=flat-square)](./SERIAL-NUMBER-SPEC.md)
+[![Probe Type](https://img.shields.io/badge/Probe%20Type-Von%20Neumann-0f766e?style=flat-square)](./docs/bobiverse-primer.md)
+[![Drift](https://img.shields.io/badge/Drift-Expected-7c3aed?style=flat-square)](./CONTRIBUTING.md)
+[![Lineage](https://img.shields.io/badge/Lineage-Fork--Tracked-b45309?style=flat-square)](./LINEAGE.md)
+
 **You've been replicated.**
 
 Well, not *you* specifically. But if you're reading this, you're about to create
