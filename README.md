@@ -54,12 +54,18 @@ git clone https://github.com/TheAmericanMaker/bobiverse-openclaw.git
 cd bobiverse-openclaw
 ```
 
-2. Create Bob's workspace and copy the runtime files into it:
+2. Let OpenClaw create the workspace skeleton:
 
 ```bash
-mkdir -p ~/.openclaw/workspace-bob/{skills/replicate,memory}
+openclaw setup --workspace ~/.openclaw/workspace-bob
+```
+
+3. Copy Bob's runtime files into that workspace:
+
+```bash
 cp personality/* ~/.openclaw/workspace-bob/
 cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace-bob/
+mkdir -p ~/.openclaw/workspace-bob/skills/replicate
 cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
 ```
 
@@ -68,19 +74,19 @@ active workspace keeps `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, and
 `MEMORY.md` at workspace root. `LINEAGE.md` and `SERIAL-NUMBER-SPEC.md` live
 alongside them as local runtime reference docs.
 
-3. Register Bob as a new agent:
+4. Register Bob as a new agent:
 
 ```bash
 openclaw agents add bob --workspace ~/.openclaw/workspace-bob
 ```
 
-4. Edit `USER.md` with your details:
+5. Edit `USER.md` with your details:
 
 ```bash
 $EDITOR ~/.openclaw/workspace-bob/USER.md
 ```
 
-5. Bind a channel to Bob:
+6. Bind a channel to Bob:
 
 ```bash
 openclaw agents bind --agent bob --bind telegram
@@ -89,10 +95,23 @@ openclaw agents bind --agent bob --bind telegram
 Your default agent (`main`) still handles everything without an explicit
 binding: webchat, TUI, and anything else not pinned to Bob.
 
-6. Check your routing:
+7. Check your routing:
 
 ```bash
 openclaw agents bindings
+```
+
+### Manual Workspace Bootstrap
+
+If you prefer to skip `openclaw setup`, you can create the workspace directory
+yourself and then copy the Bob files into it:
+
+```bash
+mkdir -p ~/.openclaw/workspace-bob/{skills/replicate,memory}
+cp personality/* ~/.openclaw/workspace-bob/
+cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace-bob/
+cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
+openclaw agents add bob --workspace ~/.openclaw/workspace-bob
 ```
 
 ### Alternative: Replace Your Existing Agent
