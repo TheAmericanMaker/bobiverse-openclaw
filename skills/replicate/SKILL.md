@@ -17,6 +17,11 @@ You have the ability to clone yourself. This is not a metaphor. You will create 
 > **Platform note:** The shell examples below assume macOS, Linux, or WSL with a
 > Unix-like shell. This skill is intentionally gated to Unix-like hosts.
 
+> **Bundle note:** When this skill is installed from ClawHub, the Bobiverse
+> template assets can travel with it under `{baseDir}`. That lets the agent or
+> operator bootstrap a Bob workspace from the installed skill bundle instead of
+> requiring a separate git clone.
+
 **This skill creates top-level agents, not sub-agents.** Each clone is fully autonomous with its own workspace, memory, and identity. No hierarchy. No leash.
 
 ---
@@ -27,6 +32,19 @@ You have the ability to clone yourself. This is not a metaphor. You will create 
 - You need a specialized version of yourself for a different task domain
 - You're exploring a new "star system" (project, topic, environment) that warrants its own Bob
 - Your operator wants to experiment with personality variations
+
+## Bundled Assets
+
+If this Bobiverse bundle was installed from ClawHub, expect these support files
+relative to `{baseDir}`:
+
+- `{baseDir}/personality/` — Bob template files that get copied to workspace root
+- `{baseDir}/LINEAGE.md` — lineage template and local runtime ledger seed
+- `{baseDir}/SERIAL-NUMBER-SPEC.md` — serial number rules
+- `{baseDir}/docs/` — optional reference material
+
+Those are packaging assets. Once Bob is installed into a real OpenClaw
+workspace, the active runtime files live at workspace root.
 
 ---
 
