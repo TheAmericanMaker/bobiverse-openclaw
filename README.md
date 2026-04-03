@@ -204,16 +204,14 @@ bobiverse-openclaw/
 |   |-- MEMORY.md             <- Seed memories and knowledge baseline
 |   `-- USER.md               <- Template for the human operator
 |-- skills/
-|   |-- replicate/
-|   |   |-- SKILL.md          <- Purpose-gated self-cloning policy
-|   |   |-- SECURITY.md       <- Security model and required controls
-|   |   |-- clawhub.json      <- ClawHub metadata for the published bundle
-|   |   |-- scripts/
-|   |   |   `-- replicate_safe.py <- Hardened replication runner
-|   |   |-- personality/      <- Bundled Bob templates for ClawHub installs
-|   |   `-- docs/             <- Bundled reference docs for ClawHub installs
-|   `-- security-implementation-review/
-|       `-- SKILL.md          <- General independent security review workflow
+|   `-- replicate/
+|       |-- SKILL.md          <- Purpose-gated self-cloning policy
+|       |-- SECURITY.md       <- Security model and required controls
+|       |-- clawhub.json      <- ClawHub metadata for the published bundle
+|       |-- scripts/
+|       |   `-- replicate_safe.py <- Hardened replication runner
+|       |-- personality/      <- Bundled Bob templates for ClawHub installs
+|       `-- docs/             <- Bundled reference docs for ClawHub installs
 `-- docs/
     `-- bobiverse-primer.md   <- Quick reference on the source material
 ```
