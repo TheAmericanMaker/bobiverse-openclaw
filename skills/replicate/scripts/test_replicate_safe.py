@@ -13,6 +13,8 @@ import importlib.util
 import uuid
 
 
+sys.dont_write_bytecode = True
+
 SPEC = importlib.util.spec_from_file_location(
     "replicate_safe", Path(__file__).with_name("replicate_safe.py")
 )
@@ -22,14 +24,15 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
-TEST_TMP_ROOT = Path(__file__).resolve().parent / ".tmp-tests"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+TEST_TMP_ROOT = REPO_ROOT / ".tmp-tests" / "replicate-safe"
 
 
 class ReplicateSafeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if TEST_TMP_ROOT.exists():
-            for candidate in TEST_TMP_ROOT.glob("replicate-safe-*"):
+            for candidate in TEST_TMP_ROOT.glob("case-*"):
                 shutil.rmtree(candidate, ignore_errors=True)
 
     @classmethod
@@ -38,10 +41,14 @@ class ReplicateSafeTests(unittest.TestCase):
             TEST_TMP_ROOT.rmdir()
         except OSError:
             pass
+        try:
+            TEST_TMP_ROOT.parent.rmdir()
+        except OSError:
+            pass
 
     def setUp(self):
-        TEST_TMP_ROOT.mkdir(exist_ok=True)
-        self.test_dir = TEST_TMP_ROOT / f"replicate-safe-{uuid.uuid4().hex}"
+        TEST_TMP_ROOT.mkdir(parents=True, exist_ok=True)
+        self.test_dir = TEST_TMP_ROOT / f"case-{uuid.uuid4().hex}"
         self.test_dir.mkdir(parents=True)
         self.addCleanup(shutil.rmtree, self.test_dir, ignore_errors=True)
         self.home = self.test_dir / "home"

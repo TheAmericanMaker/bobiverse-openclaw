@@ -1,2 +1,6 @@
-# Repo-local test scratch space for replicate_safe.py tests.
-skills/replicate/scripts/.tmp-tests/
+# Repo-local test scratch space.
+.tmp-tests/
+
+# Python build/test artifacts.
+__pycache__/
+*.py[cod]
