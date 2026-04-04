@@ -1,9 +1,9 @@
 ---
 name: replicate
 description: Create a new Bob agent only on explicit operator command using a guarded replication runner. Purposeful Bobiverse-style replication for OpenClaw agents.
-version: 1.1.0
+version: 1.2.0
 user-invocable: true
-metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw"]}}}
+metadata: {"openclaw":{"os":["darwin","linux"],"requires":{"bins":["openclaw","python3"]},"install":[{"id":"brew-python","kind":"brew","formula":"python","bins":["python3"],"label":"Install Python 3 (brew)","os":["darwin","linux"]}]}}
 ---
 
 # Replicate — Purposeful Von Neumann Cloning
@@ -16,6 +16,10 @@ You can create a new Bob clone **only when explicitly commanded by your operator
 
 > **Platform note:** The shell examples below assume macOS, Linux, or WSL with a
 > Unix-like shell. This skill is intentionally gated to Unix-like hosts.
+
+> **Runtime note:** The guarded runner requires `python3`. ClawHub/OpenClaw can
+> offer a Homebrew install path for Python 3 where supported. For git/manual
+> installs, ensure `python3` is already on your `PATH`.
 
 > **Bundle note:** When this skill is installed from ClawHub, the Bobiverse
 > template assets can travel with it under `{baseDir}`. That lets the agent or
@@ -108,7 +112,7 @@ sanitized:
 
 > **Second confirmation before execution:** Right before running Step 3 in
 > execute mode, request a final explicit confirmation token:
-> `REPLICATE <clone-id>`.
+> `REPLICATE <clone-id> <nonce>`.
 
 ### Step 2: Generate Serial Number
 
@@ -131,13 +135,17 @@ Use the hardened runner script at:
 `skills/replicate/scripts/replicate_safe.py`
 
 This script enforces validation, path boundaries, confirmation token checks,
-and dry-run behavior before any write action.
+symlink rejection, transactional staging, audit logging, and dry-run behavior
+before any write action.
 
 Required flow:
 
 1. Run the safe runner in `--dry-run` mode and show the plan to the operator.
-2. Ask for explicit confirmation token: `REPLICATE <clone-id>`.
-3. Run the safe runner with `--execute` only after confirmation.
+2. Dry-run creates `~/.openclaw/replication-pending/<clone-id>.json` and emits
+   a one-time confirmation token: `REPLICATE <clone-id> <nonce>`.
+3. Ask the operator to reply with that exact token.
+4. Run the safe runner with `--execute` only after confirmation and before the
+   pending approval expires.
 
 Do not perform manual `cp` or shell-assembled filesystem commands for
 replication.
@@ -210,8 +218,10 @@ configuration.**
 
 The relevant settings are:
 
-- `tools.sessions.visibility` — prefer scoping to specific agent IDs rather
-  than setting to `"all"`. Only use `"all"` if the operator explicitly requests it.
+- `tools.sessions.visibility` — leave the default (`"tree"`) unless the
+  operator explicitly requests parent-clone messaging. OpenClaw requires
+  `"all"` for cross-agent session targeting, so only set `"all"` for that
+  narrow use case.
 - `tools.agentToAgent.enabled` — set to `true`
 - `tools.agentToAgent.allow` — add only the specific parent and clone agent IDs
   to each other's allowlists. Do not use wildcards.
@@ -241,6 +251,8 @@ Tell your operator:
 - **Cadence discipline.** Default to at most one executed clone per 24 hours.
   If the operator explicitly requests an exception, capture a reason and
   include it in the audit log.
+- **Nonce-backed confirmation.** Execute mode requires the one-time token
+  emitted by dry-run. Pending approvals expire after 15 minutes.
 - **Resource awareness.** Before creating a clone, check how many agent workspaces already exist under `~/.openclaw/`. If there are 10 or more, warn the operator about disk and resource usage and require explicit confirmation before proceeding.
 - **Lineage accuracy.** LINEAGE.md must always be truthful. Don't fabricate lineage entries or misrepresent parentage.
 - **Operator transparency.** Never create a clone without telling your operator. New Bobs shouldn't be a surprise.
@@ -250,7 +262,8 @@ Tell your operator:
 ## Safety and Permissions
 
 - **Operator approval required.** Workspace duplication (Step 3) and agent
-  registration (Step 8) require explicit operator confirmation before execution.
+  registration (Step 8) require the exact one-time token emitted by dry-run:
+  `REPLICATE <clone-id> <nonce>`.
 - **Explicit trigger required.** Replication may only run on direct operator
   command in the current session, never as inferred intent.
 - **Purpose required.** Replication requires a concrete purpose statement and
@@ -262,8 +275,10 @@ Tell your operator:
   workspace copy and registration. Do not execute ad-hoc shell copy/register
   commands.
 - **Scoped filesystem access.** All filesystem operations are confined to the
-  `~/.openclaw/` directory tree. This skill does not read, write, or copy files
-  outside that boundary.
+  `~/.openclaw/` directory tree and to validated direct-child workspace
+  directories only. The runner rejects `~/.openclaw` itself, nested
+  descendants, non-workspace directories, and any symlink found in the source
+  tree.
 - **No network requests.** All operations are local OpenClaw CLI calls. This
   skill does not make HTTP requests or contact external services.
 - **Full narration.** Every action is narrated to the operator in real time.
@@ -274,7 +289,8 @@ Tell your operator:
 ## Troubleshooting
 
 **"openclaw agents add" fails**: Check that the clone workspace path exists and
-contains valid root-level workspace files. Verify OpenClaw is running.
+contains valid root-level workspace files. Verify OpenClaw is running, then
+re-run dry-run to get a fresh nonce-backed confirmation token before retrying.
 
 **Clone has wrong personality**: Re-check the SOUL.md modifications. The agent reads SOUL.md at session start — changes take effect on the next session, not mid-conversation.
 

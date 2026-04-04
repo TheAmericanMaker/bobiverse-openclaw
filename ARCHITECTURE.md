@@ -1,8 +1,8 @@
 # Architecture - How Bobiverse OpenClaw Works
 
 This document explains the technical design: how OpenClaw's file-first
-architecture enables self-cloning agents, what each file does, how personality
-drift happens, and how clones communicate.
+architecture enables explicit, operator-approved Bob replication, what each
+file does, how personality drift happens, and how clones communicate.
 
 ---
 
@@ -79,23 +79,27 @@ optional upstream sync layer.
 
 ## How the Replicate Skill Works
 
-The `/replicate` skill is a Markdown instruction set with YAML frontmatter.
-When invoked, it executes a 10-step procedure:
+The `/replicate` skill is a Markdown instruction set with YAML frontmatter plus
+the guarded `scripts/replicate_safe.py` runner. When invoked, it executes a
+10-step procedure:
 
-1. Gather parameters: clone name, personality mods, memory policy, star system
-2. Generate serial number: increment the parent's generation and stamp the date
-3. Copy workspace: duplicate the current workspace to a new directory
-4. Modify `SOUL.md`: apply personality changes and add divergence notes
-5. Update `IDENTITY.md`: new serial, generation, parent, fork date
-6. Apply memory policy: full, pruned, or minimal inheritance
-7. Update `LINEAGE.md`: in both parent and clone workspaces
-8. Register the clone: `openclaw agents add` creates a new top-level agent
-9. Establish communication: optional cross-agent `sessions_send` setup
+1. Verify explicit trigger and concrete mission need
+2. Gather parameters: clone name, personality mods, memory policy, star system
+3. Generate serial number: increment the parent's generation and stamp the date
+4. Run the guarded dry-run: validate the parent workspace, reject symlinks,
+   create `replication-pending/<clone-id>.json`, and emit a one-time nonce token
+5. Execute only after exact confirmation: stage the clone, register it, and
+   audit `execute-started` / `execute-failed` / `execute-succeeded`
+6. Modify `SOUL.md`: apply personality changes and add divergence notes
+7. Update `IDENTITY.md`: new serial, generation, parent, fork date
+8. Apply memory policy: full, pruned, or minimal inheritance
+9. Update `LINEAGE.md`: in both parent and clone workspaces
 10. Report: tell the operator what happened
 
 Key design decision: clones are created as **top-level agents**, not
 sub-agents. By registering each clone as a full agent with
-`openclaw agents add`, every Bob has equal standing and full autonomy.
+`openclaw agents add`, every Bob has equal standing and full autonomy after the
+operator explicitly approves creation.
 
 ---
 
@@ -151,7 +155,8 @@ OpenClaw supports cross-agent messaging via `sessions_send`. For Bob-to-Bob
 communication:
 
 **Setup:** cross-agent session messaging needs both session-tool visibility and
-an agent-to-agent allowlist in `openclaw.json`:
+an agent-to-agent allowlist in `openclaw.json`. Leave session visibility at the
+default `tree` unless the operator explicitly asks for parent-clone messaging:
 
 ```json
 {
@@ -164,6 +169,10 @@ an agent-to-agent allowlist in `openclaw.json`:
   }
 }
 ```
+
+`"all"` is required for cross-agent targeting in OpenClaw, so least privilege
+comes from keeping it off by default and restricting `agentToAgent.allow` to the
+specific parent and clone IDs.
 
 **Capabilities:** fire-and-forget delivery, wait-for-reply with timeout, and
 multi-turn reply loops.
