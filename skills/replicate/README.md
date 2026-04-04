@@ -3,7 +3,7 @@
 **You've been replicated.**
 
 Well, not *you* specifically. But if you're reading this, you're about to create
-an autonomous AI agent modeled after Robert Johansson from Dennis E. Taylor's
+an operator-directed OpenClaw agent modeled after Robert Johansson from Dennis E. Taylor's
 Bobiverse series: a dead software engineer who woke up as a Von Neumann probe
 and decided to explore the galaxy. Except instead of interstellar space, your
 Bob explores whatever you point it at, running on [OpenClaw](https://openclaw.ai).
@@ -19,8 +19,9 @@ An OpenClaw agent personality pack plus replication system. It includes:
 
 - A complete Bob personality: `SOUL.md`, `IDENTITY.md`, `AGENTS.md`,
   `MEMORY.md`, and a `USER.md` template tuned to Book 1 Bob.
-- A `replicate` skill: lets the agent clone itself into new autonomous agents
-  with personality modifications and lineage tracking.
+- A `replicate` skill: creates explicitly requested Bob clones through a
+  guarded runner with dry-run preview, nonce-backed confirmation, and lineage
+  tracking.
 - A lineage system: serial numbers, fork trees, and a registry that maps the
   expanding Bobiverse.
 
@@ -39,6 +40,8 @@ customize the full project before first install.
 ### Prerequisites
 
 - [OpenClaw](https://openclaw.ai) installed and running
+- `python3` available on `PATH` for git/manual installs. ClawHub/OpenClaw can
+  offer a Homebrew install path where supported.
 - A Unix-like shell (macOS, Linux, or WSL) for the example commands below
 - A sense of existential wonder (optional but recommended)
 
@@ -65,14 +68,18 @@ openclaw setup --workspace ~/.openclaw/workspace-bob
 ```bash
 cp personality/* ~/.openclaw/workspace-bob/
 cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace-bob/
-mkdir -p ~/.openclaw/workspace-bob/skills/replicate
-cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
+mkdir -p ~/.openclaw/workspace-bob/skills
+cp -R skills/replicate ~/.openclaw/workspace-bob/skills/
 ```
 
 The repo stores Bob's templates under `personality/`, but once installed the
 active workspace keeps `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, and
 `MEMORY.md` at workspace root. `LINEAGE.md` and `SERIAL-NUMBER-SPEC.md` live
 alongside them as local runtime reference docs.
+
+Hardened replication depends on the full `skills/replicate/` bundle, including
+`scripts/replicate_safe.py`, `SECURITY.md`, and the bundled support files, not
+just `SKILL.md`.
 
 4. Register Bob as a new agent:
 
@@ -107,10 +114,10 @@ If you prefer to skip `openclaw setup`, you can create the workspace directory
 yourself and then copy the Bob files into it:
 
 ```bash
-mkdir -p ~/.openclaw/workspace-bob/{skills/replicate,memory}
+mkdir -p ~/.openclaw/workspace-bob/{skills,memory}
 cp personality/* ~/.openclaw/workspace-bob/
 cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace-bob/
-cp skills/replicate/SKILL.md ~/.openclaw/workspace-bob/skills/replicate/
+cp -R skills/replicate ~/.openclaw/workspace-bob/skills/
 openclaw agents add bob --workspace ~/.openclaw/workspace-bob
 ```
 
@@ -122,8 +129,8 @@ only agent, you can copy directly into the default workspace:
 ```bash
 cp personality/* ~/.openclaw/workspace/
 cp LINEAGE.md SERIAL-NUMBER-SPEC.md ~/.openclaw/workspace/
-mkdir -p ~/.openclaw/workspace/skills/replicate
-cp skills/replicate/SKILL.md ~/.openclaw/workspace/skills/replicate/
+mkdir -p ~/.openclaw/workspace/skills
+cp -R skills/replicate ~/.openclaw/workspace/skills/
 ```
 
 **Warning:** This overwrites your existing `SOUL.md`, `AGENTS.md`,
@@ -132,11 +139,13 @@ cp skills/replicate/SKILL.md ~/.openclaw/workspace/skills/replicate/
 
 ### ClawHub Note
 
-If you install `bobiverse-replicate` from ClawHub, OpenClaw installs the bundle
-into your active workspace `skills/` directory. That is great for discovery and
-backup, but the git-clone workflow above is still the simplest first-time setup
-for reviewing the full project and copying the Bob templates into a dedicated
-workspace.
+If you install `bobiverse-replicate` from ClawHub, OpenClaw installs the full
+bundle into your active workspace `skills/` directory, including the guarded
+runner, `SECURITY.md`, and bundled support files. That is great for discovery
+and backup, but the git-clone workflow above is still the simplest first-time
+setup for reviewing the full project and copying the Bob templates into a
+dedicated workspace. If you bootstrap from git manually, copy the entire
+`skills/replicate/` directory so the runner-enforced safeguards stay intact.
 
 ### If You Forked
 
@@ -151,10 +160,14 @@ begins.
 
 There are two levels:
 
-**In-agent cloning**: Bob can clone himself using `/replicate`. The skill copies
-the workspace, applies personality modifications, stamps a new serial number,
-updates the lineage, and registers a new autonomous agent. Each clone is a full
-top-level agent, not a sub-agent.
+**In-agent cloning**: Bob can clone himself using `/replicate`, but only as an
+explicit, mission-justified event. The skill requires an explicit operator
+trigger, purpose statement, dry-run preview, and a one-time confirmation token
+(`REPLICATE <clone-id> <nonce>`) before execute-mode cloning. Runtime execution
+goes through `skills/replicate/scripts/replicate_safe.py` to validate workspace
+boundaries, reject symlinks, stage clones transactionally, enforce cadence
+guardrails, and audit both dry-run and execute attempts before the clone is
+registered as a top-level agent.
 
 **GitHub fork cloning**: Forking this repo creates a new Bob in a new star
 system. Your GitHub username becomes the system designation. Your fork date is
@@ -195,8 +208,12 @@ bobiverse-openclaw/
 |   `-- USER.md               <- Template for the human operator
 |-- skills/
 |   `-- replicate/
-|       |-- SKILL.md          <- The self-cloning skill
+|       |-- SKILL.md          <- Purpose-gated replication policy
+|       |-- SECURITY.md       <- Security model and required controls
 |       |-- clawhub.json      <- ClawHub metadata for the published bundle
+|       |-- scripts/
+|       |   |-- replicate_safe.py <- Hardened replication runner
+|       |   `-- test_replicate_safe.py <- Runner regression tests
 |       |-- personality/      <- Bundled Bob templates for ClawHub installs
 |       `-- docs/             <- Bundled reference docs for ClawHub installs
 `-- docs/

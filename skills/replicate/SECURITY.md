@@ -15,12 +15,20 @@ Maintain the Bobiverse replication concept while ensuring replication is an expl
 
 3. **Dry-run first**
    - Planning output is shown before any write/registration action.
+   - Dry-run creates a pending approval record under
+     `~/.openclaw/replication-pending/`.
+   - Pending approvals expire after 15 minutes.
 
 4. **Confirmation token required for execution**
-   - Execution requires exact token: `REPLICATE <clone-id>`.
+   - Execution requires exact token: `REPLICATE <clone-id> <nonce>`.
+   - The token must match the dry-run-issued pending approval record.
 
 5. **Path boundary enforcement**
    - Filesystem operations are constrained to `~/.openclaw`.
+   - Parent paths must be direct-child validated workspace directories
+     (`workspace` or `workspace-<agent-id>`), never `~/.openclaw` itself or
+     an arbitrary descendant under it.
+   - The runner rejects symlinks anywhere in the source tree.
 
 6. **No shell interpolation**
    - External commands are invoked with argument arrays (`shell=False`).
@@ -32,7 +40,14 @@ Maintain the Bobiverse replication concept while ensuring replication is an expl
 
 8. **Auditability**
    - Replication actions are recorded in `~/.openclaw/replication-audit.log`.
+   - Audit events include `dry-run-created`, `execute-started`,
+     `execute-failed`, and `execute-succeeded`.
    - Cooldown override reason is captured in the audit entry when used.
+   - Failed execute attempts are logged and still count toward the cooldown.
+
+9. **Transactional execution**
+   - Clone copies are staged in `~/.openclaw/.replication-staging-<agent-id>`.
+   - Failed executions roll back the staged or final clone workspace.
 
 ## Implementation Requirement
 
