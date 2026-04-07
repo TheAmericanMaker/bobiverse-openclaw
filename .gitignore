@@ -4,3 +4,5 @@
 # Python build/test artifacts.
 __pycache__/
 *.py[cod]
+
+/.codecarto
