@@ -286,7 +286,37 @@ Tell your operator:
 
 ---
 
+## Configuration
+
+The `replicate_safe.py` script supports environment variables for customization:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENCLAW_ROOT` | `~/.openclaw` | OpenClaw root directory |
+| `PENDING_TTL_MINUTES` | `15` | Pending approval time-to-live in minutes |
+| `MAX_WORKSPACES` | `10` | Maximum workspace count before requiring override |
+| `COOLDOWN_HOURS` | `24.0` | Hours between clones (requires override if triggered earlier) |
+| `MIN_PURPOSE_LENGTH` | `12` | Minimum purpose statement length in characters |
+
+Example:
+
+```bash
+export OPENCLAW_ROOT=~/.openclaw
+export PENDING_TTL_MINUTES=30
+export MAX_WORKSPACES=20
+export COOLDOWN_HOURS=12.0
+export MIN_PURPOSE_LENGTH=20
+```
+
+---
+
 ## Troubleshooting
+
+**Configuration not being applied**: Ensure environment variables are set before running the script. The script reads config at startup:
+```bash
+export OPENCLAW_ROOT=~/.openclaw  # Must be set before script runs
+python scripts/replicate_safe.py ...
+```
 
 **"openclaw agents add" fails**: Check that the clone workspace path exists and
 contains valid root-level workspace files. Verify OpenClaw is running, then
