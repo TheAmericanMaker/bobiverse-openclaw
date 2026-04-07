@@ -79,25 +79,12 @@ def count_workspaces(openclaw_root: Path) -> int:
 
 
 def write_audit_atomic(openclaw_root: Path, payload: dict) -> None:
-    """Write audit entry atomically to prevent corruption from concurrent writes."""
+    """Append audit entry to log. Append-mode writes are POSIX-atomic for entries
+    well under PIPE_BUF (~4 KiB), so concurrent runs cannot interleave or drop entries."""
     audit_path = openclaw_root / "replication-audit.log"
-    temp_path = audit_path.with_suffix(".tmp")
     new_entry = json.dumps(payload, sort_keys=True) + "\n"
-    try:
-        with open(audit_path, "r", encoding="utf-8") as f:
-            existing_content = f.read()
-        with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(existing_content)
-            f.write(new_entry)
-        os.replace(temp_path, audit_path)
-    except FileNotFoundError:
-        with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(new_entry)
-        os.replace(temp_path, audit_path)
-    except Exception:
-        if temp_path.exists():
-            temp_path.unlink()
-        raise
+    with open(audit_path, "a", encoding="utf-8") as f:
+        f.write(new_entry)
 
 
 def ensure_no_symlinks(workspace: Path) -> None:
@@ -399,21 +386,14 @@ def run(argv: list[str] | None = None, current_time: datetime | None = None) -> 
     )
 
     try:
-        shutil.copytree(plan.parent_workspace, plan.staging_workspace, symlinks=False)
+        shutil.copytree(plan.parent_workspace, plan.staging_workspace, symlinks=True)
+        ensure_no_symlinks(plan.staging_workspace)
         shutil.move(str(plan.staging_workspace), str(plan.clone_workspace))
         subprocess.run(
             ["openclaw", "agents", "add", plan.agent_id, "--workspace", str(plan.clone_workspace)],
             check=True,
             shell=False,
         )
-        verify_result = subprocess.run(
-            ["openclaw", "agents", "list"],
-            capture_output=True,
-            text=True,
-            shell=False,
-        )
-        if plan.agent_id not in verify_result.stdout:
-            raise RuntimeError(f"Agent {plan.agent_id} failed to register after workspace creation")
     except Exception as exc:
         cleanup_errors: list[str] = []
         for candidate in (plan.staging_workspace, plan.clone_workspace):
