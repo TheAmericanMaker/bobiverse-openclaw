@@ -56,3 +56,27 @@ All clone workspace duplication and `openclaw agents add` registration must be d
 - `skills/replicate/scripts/replicate_safe.py`
 
 Ad-hoc shell copy/register command assembly is not permitted for replication flow.
+
+---
+
+## Configuration
+
+The script supports environment variables for customization:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENCLAW_ROOT` | `~/.openclaw` | OpenClaw root directory |
+| `PENDING_TTL_MINUTES` | `15` | Pending approval time-to-live |
+| `MAX_WORKSPACES` | `10` | Maximum workspace count before override required |
+| `COOLDOWN_HOURS` | `24.0` | Hours between clones |
+| `MIN_PURPOSE_LENGTH` | `12` | Minimum purpose statement length |
+
+Set these before running the script:
+
+```bash
+export OPENCLAW_ROOT=~/.openclaw
+export PENDING_TTL_MINUTES=30
+export MAX_WORKSPACES=20
+export COOLDOWN_HOURS=12.0
+export MIN_PURPOSE_LENGTH=20
+```

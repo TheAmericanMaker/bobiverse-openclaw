@@ -103,6 +103,58 @@ operator explicitly approves creation.
 
 ---
 
+## Security Implementation
+
+The `replicate_safe.py` script implements multiple security layers:
+
+### Path Boundary Enforcement
+All filesystem operations are restricted to within the `OPENCLAW_ROOT` directory (default: `~/.openclaw`). The script validates all paths using `ensure_within_openclaw()` before any operation.
+
+### Symlink Protection
+Workspace duplication uses `shutil.copytree(symlinks=False)` to prevent symlinks from escaping the workspace boundary. This blocks potential path traversal attacks via malicious symlinks in the source workspace.
+
+### Input Validation
+All user-provided inputs (clone name, star system) are validated against strict allowlists:
+- Clone name: alphanumeric + hyphens/underscores, max 64 characters
+- Star system: alphanumeric + hyphens, max 39 characters (valid GitHub username)
+
+### Nonce-Backed Confirmation
+Execute mode requires a one-time token generated during dry-run:
+- Token expires after `PENDING_TTL_MINUTES` (default: 15 minutes)
+- Token is cryptographically random via `secrets.token_urlsafe(12)`
+- Exact format required: `REPLICATE <clone-id> <nonce>`
+
+### Rate Limiting
+- Cooldown: `COOLDOWN_HOURS` (default: 24.0) between clones
+- Workspace limit: `MAX_WORKSPACES` (default: 10)
+- Both can be overridden with command-line flags for special cases
+
+### Audit Logging
+All replication events are logged to `~/.openclaw/replication-audit.log`:
+- `dry-run-created`
+- `execute-started`
+- `execute-failed`
+- `execute-succeeded`
+
+### Atomic Operations
+Audit log writes use atomic file operations (temp file + `os.replace`) to prevent corruption from concurrent writes.
+
+### Agent Registration Verification
+After registering a new agent via `openclaw agents add`, the script verifies the agent appears in the agent list before marking the operation as successful.
+
+### Configuration
+All thresholds are configurable via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENCLAW_ROOT` | `~/.openclaw` | OpenClaw root directory |
+| `PENDING_TTL_MINUTES` | `15` | Pending approval TTL |
+| `MAX_WORKSPACES` | `10` | Maximum workspace count |
+| `COOLDOWN_HOURS` | `24.0` | Cooldown between clones |
+| `MIN_PURPOSE_LENGTH` | `12` | Minimum purpose length |
+
+---
+
 ## Memory Tiers and Cloning
 
 OpenClaw's memory model affects cloning strategy:

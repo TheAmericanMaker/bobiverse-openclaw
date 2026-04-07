@@ -12,6 +12,7 @@ Security properties:
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import secrets
@@ -24,8 +25,17 @@ from pathlib import Path
 SERIAL_RE = re.compile(r"^Bob-[0-9A-Za-z]+-[A-Za-z0-9-]{1,39}-\d{4}-\d{2}-\d{2}$")
 AGENT_RE = re.compile(r"^[a-z0-9-]{1,80}$")
 WORKSPACE_ROOT_FILES = ("SOUL.md", "IDENTITY.md", "AGENTS.md")
-PENDING_APPROVAL_TTL = timedelta(minutes=15)
 EXECUTE_AUDIT_EVENTS = {"execute-started", "execute-failed", "execute-succeeded"}
+
+
+def get_config() -> dict:
+    return {
+        "openclaw_root": Path(os.environ.get("OPENCLAW_ROOT", "~/.openclaw")).expanduser().resolve(),
+        "pending_ttl": timedelta(minutes=int(os.environ.get("PENDING_TTL_MINUTES", 15))),
+        "max_workspaces": int(os.environ.get("MAX_WORKSPACES", 10)),
+        "cooldown_hours": float(os.environ.get("COOLDOWN_HOURS", 24.0)),
+        "min_purpose_length": int(os.environ.get("MIN_PURPOSE_LENGTH", 12)),
+    }
 
 
 @dataclass(frozen=True)
@@ -45,7 +55,7 @@ def utc_now(current_time: datetime | None = None) -> datetime:
 
 
 def get_openclaw_root() -> Path:
-    return (Path.home() / ".openclaw").expanduser().resolve()
+    return get_config()["openclaw_root"]
 
 
 def ensure_within_openclaw(path: Path, openclaw_root: Path) -> Path:
@@ -66,6 +76,28 @@ def count_workspaces(openclaw_root: Path) -> int:
             if p.is_dir() and (p.name == "workspace" or p.name.startswith("workspace-"))
         ]
     )
+
+
+def write_audit_atomic(openclaw_root: Path, payload: dict) -> None:
+    """Write audit entry atomically to prevent corruption from concurrent writes."""
+    audit_path = openclaw_root / "replication-audit.log"
+    temp_path = audit_path.with_suffix(".tmp")
+    new_entry = json.dumps(payload, sort_keys=True) + "\n"
+    try:
+        with open(audit_path, "r", encoding="utf-8") as f:
+            existing_content = f.read()
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(existing_content)
+            f.write(new_entry)
+        os.replace(temp_path, audit_path)
+    except FileNotFoundError:
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(new_entry)
+        os.replace(temp_path, audit_path)
+    except Exception:
+        if temp_path.exists():
+            temp_path.unlink()
+        raise
 
 
 def ensure_no_symlinks(workspace: Path) -> None:
@@ -122,9 +154,8 @@ def build_plan(args: argparse.Namespace, openclaw_root: Path) -> Plan:
 
 
 def write_audit(openclaw_root: Path, payload: dict) -> None:
-    audit_path = openclaw_root / "replication-audit.log"
-    with audit_path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(payload, sort_keys=True) + "\n")
+    """Write audit entry atomically to prevent corruption from concurrent writes."""
+    write_audit_atomic(openclaw_root, payload)
 
 
 def last_execute_time(openclaw_root: Path) -> datetime | None:
@@ -177,10 +208,11 @@ def create_pending_approval(
     plan: Plan,
     purpose: str,
     existing_workspaces: int,
+    config: dict,
     current_time: datetime | None = None,
 ) -> dict:
     now = utc_now(current_time)
-    expires = now + PENDING_APPROVAL_TTL
+    expires = now + config["pending_ttl"]
     nonce = secrets.token_urlsafe(12)
     payload = {
         "clone_id": plan.clone_id,
@@ -285,18 +317,19 @@ def run(argv: list[str] | None = None, current_time: datetime | None = None) -> 
     )
 
     args = parser.parse_args(argv)
-    openclaw_root = get_openclaw_root()
+    config = get_config()
+    openclaw_root = config["openclaw_root"]
     openclaw_root.mkdir(parents=True, exist_ok=True)
 
     purpose = args.purpose.strip()
-    if len(purpose) < 12:
-        raise ValueError("Purpose statement too short; provide concrete justification.")
+    if len(purpose) < config["min_purpose_length"]:
+        raise ValueError(f"Purpose statement too short; provide concrete justification (min {config['min_purpose_length']} chars).")
 
     plan = build_plan(args, openclaw_root)
 
     existing = count_workspaces(openclaw_root)
-    if existing >= 10 and not args.allow_high_workspace_count:
-        raise ValueError("Workspace count >= 10. Re-run with --allow-high-workspace-count to continue.")
+    if existing >= config["max_workspaces"] and not args.allow_high_workspace_count:
+        raise ValueError(f"Workspace count >= {config['max_workspaces']}. Re-run with --allow-high-workspace-count to continue.")
 
     cooldown_override = args.override_cooldown_reason.strip()
     base_summary = {
@@ -315,6 +348,7 @@ def run(argv: list[str] | None = None, current_time: datetime | None = None) -> 
             plan,
             purpose,
             existing,
+            config,
             current_time=current_time,
         )
         print(
@@ -342,9 +376,9 @@ def run(argv: list[str] | None = None, current_time: datetime | None = None) -> 
     previous_exec = last_execute_time(openclaw_root)
     if previous_exec is not None:
         hours_since = (utc_now(current_time) - previous_exec).total_seconds() / 3600.0
-        if hours_since < 24.0 and len(cooldown_override) < 12:
+        if hours_since < config["cooldown_hours"] and len(cooldown_override) < 12:
             raise ValueError(
-                "24h cooldown active. Provide --override-cooldown-reason with concrete necessity to proceed."
+                f"{config['cooldown_hours']}h cooldown active. Provide --override-cooldown-reason with concrete necessity to proceed."
             )
 
     if plan.clone_workspace.exists():
@@ -365,14 +399,21 @@ def run(argv: list[str] | None = None, current_time: datetime | None = None) -> 
     )
 
     try:
-        shutil.copytree(plan.parent_workspace, plan.staging_workspace, symlinks=True)
-        ensure_no_symlinks(plan.staging_workspace)
+        shutil.copytree(plan.parent_workspace, plan.staging_workspace, symlinks=False)
         shutil.move(str(plan.staging_workspace), str(plan.clone_workspace))
         subprocess.run(
             ["openclaw", "agents", "add", plan.agent_id, "--workspace", str(plan.clone_workspace)],
             check=True,
             shell=False,
         )
+        verify_result = subprocess.run(
+            ["openclaw", "agents", "list"],
+            capture_output=True,
+            text=True,
+            shell=False,
+        )
+        if plan.agent_id not in verify_result.stdout:
+            raise RuntimeError(f"Agent {plan.agent_id} failed to register after workspace creation")
     except Exception as exc:
         cleanup_errors: list[str] = []
         for candidate in (plan.staging_workspace, plan.clone_workspace):
