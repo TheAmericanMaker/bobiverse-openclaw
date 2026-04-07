@@ -4,6 +4,10 @@ This document explains the technical design: how OpenClaw's file-first
 architecture enables explicit, operator-approved Bob replication, what each
 file does, how personality drift happens, and how clones communicate.
 
+> **Note:** This document describes the current implementation. For a complete
+> technical analysis including security review, protocol specifications, and
+> reimplementation guidance, see the `.codecarto/findings/` directory.
+
 ---
 
 ## Why OpenClaw
@@ -103,6 +107,67 @@ operator explicitly approves creation.
 
 ---
 
+## Security Model
+
+The replication runner (`scripts/replicate_safe.py`) implements a defense-in-depth
+security model with multiple layers of protection:
+
+### Input Validation
+- Clone IDs must match regex: `^Bob-[0-9A-Za-z]+-[A-Za-z0-9-]{1,39}-\d{4}-\d{2}-\d{2}$`
+- Agent IDs must match regex: `^[a-z0-9-]{1,80}$`
+- Purpose statement must meet minimum length (12 characters)
+- All inputs validated before any filesystem operations
+
+### Path Boundary Enforcement
+- All paths resolved and verified to be within the configured `~/.openclaw` root
+- Rejects any path that escapes the boundary
+- Prevents directory traversal attacks
+
+### Symlink Rejection
+- Entire workspace scanned for symlinks before any operation
+- Rejects workspaces containing symlinks to prevent traversal attacks
+
+### Nonce-Backed Confirmation
+- Dry-run generates a cryptographically random nonce (`secrets.token_urlsafe`)
+- Execute mode requires exact token: `REPLICATE <clone-id> <nonce>`
+- Pending approvals expire after 15 minutes (configurable)
+
+### Atomic Audit Logging
+- All events logged to `replication-audit.log` via atomic file replacement
+- Events: `dry-run-created`, `execute-started`, `execute-succeeded`, `execute-failed`
+- Survives crashes and concurrent writes
+
+### No Shell Interpolation
+- All subprocess calls use `shell=False` to prevent command injection
+- Uses argument lists, not shell strings
+
+### Cadence Controls
+- 24-hour cooldown between executions (configurable)
+- Workspace count limit (default: 10) with override flag
+- Rate limiting built into the runner
+
+---
+
+## Defect Scan Results
+
+The codebase has been analyzed via a 6-pass defect scan covering:
+1. Logic and Correctness
+2. Error Handling and Resilience
+3. Concurrency and Resource Management
+4. Security and Trust Boundaries
+5. API Contract Violations
+6. Configuration and Environment Hazards
+
+**Result: Zero defects found.** The `replicate_safe.py` script demonstrates strong
+security properties throughout:
+- Input validation with regex patterns
+- Proper path boundary enforcement
+- Atomic file operations for audit logging
+- Clear control flow with no unreachable branches
+- Comprehensive error handling with cleanup on failure
+
+---
+
 ## Memory Tiers and Cloning
 
 OpenClaw's memory model affects cloning strategy:
@@ -197,3 +262,39 @@ This is the meta-layer that makes the project work as a community system:
 This metaphor layer costs almost nothing to maintain because it is built on
 GitHub's existing infrastructure. The only real requirement is that forkers
 follow `CONTRIBUTING.md` and keep lineage records honest.
+
+---
+
+## Portability and Reimplementation
+
+The system is designed with portability in mind. Key considerations for porting
+to other frameworks or languages:
+
+### Core Semantics (Portable)
+- Personality files (SOUL.md, IDENTITY.md, AGENTS.md, MEMORY.md) are plain Markdown
+- Serial number format is a simple regex: `Bob-<gen>-<system>-<date>`
+- Lineage tracking is Markdown table format
+
+### Framework-Specific (Require Equivalents)
+- OpenClaw's session management and agent registration
+- File-first architecture with prompt injection
+- Cross-agent messaging via `sessions_send`
+
+### Security Model (Language-Agnostic)
+The `replicate_safe.py` security properties can be implemented in any language:
+1. Input validation with regex
+2. Path boundary enforcement
+3. Symlink rejection
+4. Nonce-backed confirmation tokens
+5. Atomic audit logging (using platform primitives)
+6. No shell interpolation in subprocess calls
+
+### Implementation Layers
+
+| Layer | Description | Portability |
+|-------|-------------|-------------|
+| PersonalityProvider | Loads personality files | Portable (Markdown) |
+| ReplicationService | Orchestrates cloning | Portable (logic) |
+| ReplicateRunner | Security-hardened execution | Portable (with care) |
+| AgentRegistry | Framework integration | Framework-specific |
+| LineageStore | Fork tracking | Portable (files) |
